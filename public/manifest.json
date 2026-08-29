@@ -2,14 +2,15 @@
   "name": "KingdomiGuide",
   "short_name": "Kingdomino",
   "description": "Compagnon pour le jeu de société Kingdomino - Tirage, Règles & Calcul de Score",
-  "start_url": "/",
+  "start_url": "/KingdomiGuide/",
+  "scope": "/KingdomiGuide/",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#0f172a",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/KingdomiGuide/icon.svg",
       "sizes": "192x192 512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
