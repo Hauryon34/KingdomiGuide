@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 min-h-screen select-none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(234, 179, 8, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(234, 179, 8, 0.7);
+}
+
+/* Wood & Parchment Medieval textures */
+.bg-parchment {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #451a03;
+}
+
+.bg-parchment-dark {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.border-wood {
+  border-color: #854d0e;
+}
+
+.wood-gradient {
+  background: linear-gradient(180deg, #78350f 0%, #451a03 100%);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%);
+}
+
+/* Kingdomino Terrain Gradients & Patterns */
+.terrain-champs {
+  background: linear-gradient(135deg, #fde047 0%, #eab308 70%, #ca8a04 100%);
+}
+
+.terrain-foret {
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 70%, #14532d 100%);
+}
+
+.terrain-eau {
+  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 70%, #1d4ed8 100%);
+}
+
+.terrain-prairie {
+  background: linear-gradient(135deg, #a3e635 0%, #65a30d 70%, #3f6212 100%);
+}
+
+.terrain-marais {
+  background: linear-gradient(135deg, #c084fc 0%, #7e22ce 70%, #581c87 100%);
+}
+
+.terrain-mine {
+  background: linear-gradient(135deg, #64748b 0%, #334155 70%, #0f172a 100%);
+}
+
+.terrain-chateau {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 60%, #94a3b8 100%);
+}
+
+/* Crown glow effect */
+.crown-glow {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 6px rgba(253, 224, 71, 0.8));
+}

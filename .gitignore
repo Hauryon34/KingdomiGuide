@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# Android build outputs
+android/app/build/
+android/.gradle/
+android/build/
+android/captures/
+android/.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
