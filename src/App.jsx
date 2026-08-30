@@ -106,7 +106,6 @@ export default function App() {
     setIsSettingsOpen(false);
   };
 
-  // Revanche Immédiate : même joueurs, nouvelles grilles vides, tirage direct (Étape 2)
   const handleImmediateRematch = () => {
     playClickSound();
     const emptyGrids = {};
@@ -115,7 +114,7 @@ export default function App() {
     });
     setPlayerGrids(emptyGrids);
     setTurnOrder([]);
-    setCurrentStep(2); // Direction directe vers le tirage au sort
+    setCurrentStep(2);
     setMaxUnlockedStep(2);
   };
 
@@ -129,14 +128,14 @@ export default function App() {
             type="button"
             disabled={!isPlayersReady}
             onClick={handleValidatePlayers}
-            className={`flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 transition-all ${
+            className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 transition-all ${
               isPlayersReady
                 ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98]'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
             }`}
           >
             <span>{isPlayersReady ? 'Valider' : '2 joueurs min.'}</span>
-            {isPlayersReady && <ArrowRight size={17} />}
+            {isPlayersReady && <ArrowRight size={16} />}
           </button>
         );
       case 1:
@@ -144,10 +143,10 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(2)}
-            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             <span>Continuer</span>
-            <ArrowRight size={17} />
+            <ArrowRight size={16} />
           </button>
         );
       case 2:
@@ -155,10 +154,10 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(3)}
-            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             <span>Scores</span>
-            <ArrowRight size={17} />
+            <ArrowRight size={16} />
           </button>
         );
       case 3:
@@ -166,10 +165,10 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(4)}
-            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             <span>Podium</span>
-            <ArrowRight size={17} />
+            <ArrowRight size={16} />
           </button>
         );
       case 4:
@@ -177,9 +176,9 @@ export default function App() {
           <button
             type="button"
             onClick={handleImmediateRematch}
-            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
-            <Swords size={16} />
+            <Swords size={15} />
             <span>Revanche ⚔️</span>
           </button>
         );
@@ -197,19 +196,19 @@ export default function App() {
       </div>
 
       {/* Clean Mobile-First Header */}
-      <header className="w-full max-w-md mx-auto px-4 pt-3 pb-1 flex items-center justify-between z-30">
+      <header className="w-full max-w-md mx-auto px-4 pt-2 pb-0.5 flex items-center justify-between z-30">
         <div 
           onClick={() => goToStep(0)}
           className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
         >
-          <div className="p-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-md">
-            <Crown size={18} className="fill-slate-950" />
+          <div className="p-1 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-md">
+            <Crown size={16} className="fill-slate-950" />
           </div>
           <div>
-            <span className="font-medieval font-black text-base tracking-wide text-amber-200 block leading-tight">
+            <span className="font-medieval font-black text-sm tracking-wide text-amber-200 block leading-tight">
               KingdomiGuide
             </span>
-            <span className="text-[9px] text-slate-400 font-medium tracking-wider uppercase block">
+            <span className="text-[8px] text-slate-400 font-medium tracking-wider uppercase block">
               Compagnon Kingdomino
             </span>
           </div>
@@ -223,21 +222,21 @@ export default function App() {
               playClickSound();
               setIsSettingsOpen(true);
             }}
-            className="p-2 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-amber-400 hover:bg-slate-800 transition-all shadow-sm"
+            className="p-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-amber-400 hover:bg-slate-800 transition-all shadow-sm"
             title="Paramètres de l'application"
           >
-            <Settings size={16} />
+            <Settings size={15} />
           </button>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className={`w-full flex-1 flex flex-col justify-start mx-auto py-2 px-3 z-10 ${
-        isMobileFrame ? 'max-w-md my-2 rounded-3xl border-4 border-slate-800 bg-slate-950 shadow-2xl overflow-hidden min-h-[820px]' : 'max-w-md'
+      <main className={`w-full flex-1 flex flex-col justify-between mx-auto py-1 px-3 z-10 ${
+        isMobileFrame ? 'max-w-md my-2 rounded-3xl border-4 border-slate-800 bg-slate-950 shadow-2xl overflow-hidden min-h-[750px]' : 'max-w-md'
       }`}>
-        <div className="w-full flex-1 flex flex-col justify-between space-y-4">
+        <div className="w-full flex-1 flex flex-col justify-between space-y-2">
           {/* Écrans du Tunnel UX */}
-          <div className="w-full space-y-4 flex-1">
+          <div className="w-full space-y-2 flex-1">
             {currentStep === 0 && (
               <StepPlayers
                 selectedMeeples={selectedMeeples}
@@ -302,7 +301,7 @@ export default function App() {
           </div>
 
           {/* Bottom Row: Fil d'Ariane & Bouton d'action sur la MÊME LIGNE */}
-          <div className="mt-auto pt-3 pb-4 max-w-sm mx-auto w-full">
+          <div className="mt-auto pt-2 pb-2.5 max-w-sm mx-auto w-full">
             <div className="flex items-center gap-2.5 w-full">
               <BreadcrumbDots
                 currentStep={currentStep}
@@ -382,7 +381,7 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Desktop Simulator Toggle (sur PC) */}
+              {/* Desktop Simulator Toggle */}
               <div className="hidden md:flex items-center justify-between p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-300">
