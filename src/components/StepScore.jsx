@@ -14,8 +14,16 @@ import {
   RotateCcw, 
   AlertTriangle,
   Camera,
-  Info
+  Info,
+  Brush,
+  Link2,
+  Unlink
 } from 'lucide-react';
+import { 
+  playTileSound, 
+  playCrownSound, 
+  playClickSound 
+} from '../utils/audioHaptics';
 
 export default function StepScore({
   selectedMeeples,
@@ -31,6 +39,7 @@ export default function StepScore({
   const [selectedTerrain, setSelectedTerrain] = useState('champs');
   const [highlightedDomain, setHighlightedDomain] = useState(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [pendingLinkSource, setPendingLinkSource] = useState(null); // { r, c } for domino linking
 
   // Pointer drag painting state
   const isPointerDownRef = useRef(false);
@@ -63,6 +72,7 @@ export default function StepScore({
 
   const handleGridSizeChange = (newSize) => {
     if (newSize === gridSize) return;
+    playClickSound();
     setGridSize(newSize);
     const updatedGrids = {};
     selectedMeeples.forEach((id) => {
@@ -70,33 +80,105 @@ export default function StepScore({
     });
     setPlayerGrids(updatedGrids);
     setHighlightedDomain(null);
+    setPendingLinkSource(null);
   };
 
-  // Helper to paint a cell with current brush
+  const unlinkCell = (newGrid, r, c) => {
+    const cell = newGrid[r][c];
+    if (!cell.link) return;
+
+    if (cell.link === 'right' && c + 1 < gridSize) {
+      newGrid[r][c + 1].link = null;
+    } else if (cell.link === 'left' && c - 1 >= 0) {
+      newGrid[r][c - 1].link = null;
+    } else if (cell.link === 'bottom' && r + 1 < gridSize) {
+      newGrid[r + 1][c].link = null;
+    } else if (cell.link === 'top' && r - 1 >= 0) {
+      newGrid[r - 1][c].link = null;
+    }
+    cell.link = null;
+  };
+
+  const handleLinkModeClick = (r, c) => {
+    const newGrid = currentGrid.map(row => row.map(cell => ({ ...cell })));
+    const cell = newGrid[r][c];
+
+    if (cell.terrain === 'empty' || cell.terrain === 'chateau') {
+      setPendingLinkSource(null);
+      return;
+    }
+
+    if (!pendingLinkSource) {
+      // If already linked, click toggles/unlinks
+      if (cell.link) {
+        unlinkCell(newGrid, r, c);
+        playTileSound();
+        setPlayerGrids({ ...playerGrids, [currentPlayer.id]: newGrid });
+        return;
+      }
+      // Set source for linking
+      setPendingLinkSource({ r, c });
+      playClickSound();
+    } else {
+      const src = pendingLinkSource;
+      const dr = Math.abs(src.r - r);
+      const dc = Math.abs(src.c - c);
+
+      // Must be 4-way adjacent
+      if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
+        unlinkCell(newGrid, src.r, src.c);
+        unlinkCell(newGrid, r, c);
+
+        if (r === src.r && c === src.c + 1) {
+          newGrid[src.r][src.c].link = 'right';
+          newGrid[r][c].link = 'left';
+        } else if (r === src.r && c === src.c - 1) {
+          newGrid[src.r][src.c].link = 'left';
+          newGrid[r][c].link = 'right';
+        } else if (r === src.r + 1 && c === src.c) {
+          newGrid[src.r][src.c].link = 'bottom';
+          newGrid[r][c].link = 'top';
+        } else if (r === src.r - 1 && c === src.c) {
+          newGrid[src.r][src.c].link = 'top';
+          newGrid[r][c].link = 'bottom';
+        }
+
+        playCrownSound();
+        setPlayerGrids({ ...playerGrids, [currentPlayer.id]: newGrid });
+      }
+      setPendingLinkSource(null);
+    }
+  };
+
   const paintCell = (r, c, cycleCrownsIfSame = false) => {
     const cell = currentGrid[r][c];
     const newGrid = currentGrid.map(row => row.map(cell => ({ ...cell })));
 
     if (selectedTerrain === 'empty') {
-      newGrid[r][c] = { terrain: 'empty', crowns: 0 };
+      unlinkCell(newGrid, r, c);
+      newGrid[r][c] = { terrain: 'empty', crowns: 0, link: null };
+      playTileSound();
     } else if (selectedTerrain === 'chateau') {
       for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
           if (newGrid[row][col].terrain === 'chateau') {
-            newGrid[row][col] = { terrain: 'empty', crowns: 0 };
+            newGrid[row][col] = { terrain: 'empty', crowns: 0, link: null };
           }
         }
       }
-      newGrid[r][c] = { terrain: 'chateau', crowns: 0 };
+      unlinkCell(newGrid, r, c);
+      newGrid[r][c] = { terrain: 'chateau', crowns: 0, link: null };
+      playTileSound();
     } else {
       if (cycleCrownsIfSame && cell.terrain === selectedTerrain) {
         const maxCr = TERRAINS[selectedTerrain].maxCrowns;
         const nextCrowns = (cell.crowns + 1) > maxCr ? 0 : cell.crowns + 1;
-        newGrid[r][c] = { terrain: selectedTerrain, crowns: nextCrowns };
+        newGrid[r][c] = { ...cell, terrain: selectedTerrain, crowns: nextCrowns };
+        playCrownSound();
       } else {
-        // Place terrain with 0 crowns by default (or keep existing crowns if same)
         const crownsToSet = (cell.terrain === selectedTerrain) ? cell.crowns : 0;
-        newGrid[r][c] = { terrain: selectedTerrain, crowns: crownsToSet };
+        newGrid[r][c] = { ...cell, terrain: selectedTerrain, crowns: crownsToSet };
+        playTileSound();
       }
     }
 
@@ -106,8 +188,12 @@ export default function StepScore({
     });
   };
 
-  // Drag painting pointer events: paints immediately on first touch!
   const handlePointerDown = (r, c) => {
+    if (selectedTerrain === 'link') {
+      handleLinkModeClick(r, c);
+      return;
+    }
+
     isPointerDownRef.current = true;
     hasDraggedRef.current = false;
     lastPaintedCoordRef.current = `${r}-${c}`;
@@ -115,20 +201,20 @@ export default function StepScore({
     const cell = currentGrid[r][c];
     initialTouchCellHadSameTerrainRef.current = (cell.terrain === selectedTerrain);
 
-    // If cell has different terrain, paint it immediately on pointer down!
     if (cell.terrain !== selectedTerrain) {
       paintCell(r, c, false);
     }
   };
 
   const handlePointerEnter = (r, c) => {
+    if (selectedTerrain === 'link') return;
     if (!isPointerDownRef.current) return;
     const coordKey = `${r}-${c}`;
     if (lastPaintedCoordRef.current === coordKey) return;
 
     hasDraggedRef.current = true;
     lastPaintedCoordRef.current = coordKey;
-    paintCell(r, c, false); // Drag paint mode
+    paintCell(r, c, false);
   };
 
   const handlePointerUp = () => {
@@ -136,7 +222,7 @@ export default function StepScore({
   };
 
   const handleCellClick = (r, c) => {
-    // If it was a single tap without dragging and the cell already had the same terrain, cycle crowns!
+    if (selectedTerrain === 'link') return;
     if (!hasDraggedRef.current && initialTouchCellHadSameTerrainRef.current) {
       paintCell(r, c, true);
     }
@@ -144,24 +230,27 @@ export default function StepScore({
   };
 
   const handleResetCurrentGrid = () => {
+    playClickSound();
     setPlayerGrids({
       ...playerGrids,
       [currentPlayer.id]: createEmptyGrid(gridSize)
     });
     setHighlightedDomain(null);
+    setPendingLinkSource(null);
   };
 
   const handleCenterCastle = () => {
+    playClickSound();
     const center = Math.floor(gridSize / 2);
     const newGrid = currentGrid.map(row => row.map(cell => ({ ...cell })));
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {
         if (newGrid[r][c].terrain === 'chateau') {
-          newGrid[r][c] = { terrain: 'empty', crowns: 0 };
+          newGrid[r][c] = { terrain: 'empty', crowns: 0, link: null };
         }
       }
     }
-    newGrid[center][center] = { terrain: 'chateau', crowns: 0 };
+    newGrid[center][center] = { terrain: 'chateau', crowns: 0, link: null };
     setPlayerGrids({
       ...playerGrids,
       [currentPlayer.id]: newGrid
@@ -181,6 +270,16 @@ export default function StepScore({
     return `${count} cases vides`;
   };
 
+  const formatPlacedCells = (count) => {
+    if (count <= 1) return `${count} case`;
+    return `${count} cases`;
+  };
+
+  const formatCrowns = (count) => {
+    if (count <= 1) return `${count} 👑`;
+    return `${count} 👑`;
+  };
+
   return (
     <div 
       className="space-y-4 max-w-sm sm:max-w-md mx-auto px-1 animate-fade-in select-none"
@@ -196,8 +295,10 @@ export default function StepScore({
                 key={player.id}
                 type="button"
                 onClick={() => {
+                  playClickSound();
                   setActivePlayerId(player.id);
                   setHighlightedDomain(null);
+                  setPendingLinkSource(null);
                 }}
                 className={`p-2 rounded-xl border flex items-center justify-between transition-all ${
                   isSelected
@@ -232,16 +333,18 @@ export default function StepScore({
               </span>
             </div>
             <div className="text-[11px] text-slate-400">
-              {currentScoreData.totalPlacedCells} cases • {currentScoreData.totalCrowns} 👑
+              {formatPlacedCells(currentScoreData.totalPlacedCells)} • {formatCrowns(currentScoreData.totalCrowns)}
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Bouton Scanner Photo */}
           <button
             type="button"
-            onClick={() => setIsScannerOpen(true)}
+            onClick={() => {
+              playClickSound();
+              setIsScannerOpen(true);
+            }}
             className="p-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-md hover:scale-105 active:scale-95 transition-all flex flex-col items-center justify-center gap-0.5"
             title="Scanner le royaume avec l'appareil photo"
           >
@@ -251,7 +354,7 @@ export default function StepScore({
 
           <div className="text-right pl-1">
             <div className="text-2xl font-black font-medieval text-amber-300 leading-none">
-              {currentScoreData.totalScore} <span className="text-xs font-sans text-slate-400 font-bold">pts</span>
+              {currentScoreData.totalScore} <span className="text-xs font-sans text-slate-400 font-bold">{currentScoreData.totalScore > 1 ? 'pts' : 'pt'}</span>
             </div>
           </div>
         </div>
@@ -306,8 +409,33 @@ export default function StepScore({
         </div>
       </div>
 
-      {/* 4. Palette d'Outils (Gomme, Château, 6 Terrains) */}
-      <div className="bg-slate-900/95 rounded-2xl p-2.5 border border-slate-800 shadow-md space-y-2">
+      {/* 4. Palette d'Outils avec Pinceau & Bouton de Liaison Domino 🔗 */}
+      <div className="bg-slate-900/95 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2.5">
+        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-1.5 text-slate-300">
+            <Brush size={14} className="text-amber-400" />
+            <span>Pinceau de domaine</span>
+          </div>
+
+          {/* Bouton de Liaison Domino */}
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              setPendingLinkSource(null);
+              setSelectedTerrain(selectedTerrain === 'link' ? 'champs' : 'link');
+            }}
+            className={`px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 transition-all ${
+              selectedTerrain === 'link'
+                ? 'bg-indigo-500 text-white shadow-md ring-2 ring-indigo-300 scale-105'
+                : 'bg-slate-950 border border-slate-800 text-indigo-300 hover:bg-slate-800'
+            }`}
+          >
+            <Link2 size={13} />
+            <span>{selectedTerrain === 'link' ? 'Mode Liaison Actif' : 'Lier Domino 🔗'}</span>
+          </button>
+        </div>
+
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
           {Object.entries(TERRAINS).map(([key, terrain]) => {
             const isSelected = selectedTerrain === key;
@@ -315,7 +443,11 @@ export default function StepScore({
               <button
                 key={key}
                 type="button"
-                onClick={() => setSelectedTerrain(key)}
+                onClick={() => {
+                  playClickSound();
+                  setPendingLinkSource(null);
+                  setSelectedTerrain(key);
+                }}
                 className={`py-2 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all ${
                   isSelected
                     ? 'ring-2 ring-amber-400 scale-102 shadow-md border-amber-300 ' + terrain.bgClass
@@ -331,14 +463,18 @@ export default function StepScore({
           })}
         </div>
 
-        {/* Tip text en gris léger avec icône info */}
+        {/* Tip text contextuel */}
         <div className="flex items-center justify-center gap-1 text-[11px] text-slate-400/80 pt-0.5">
           <Info size={12} className="text-slate-400" />
-          <span>Cliquer sur une case pour changer les 👑 • Glisser pour peindre</span>
+          <span>
+            {selectedTerrain === 'link'
+              ? (pendingLinkSource ? 'Touchez une case adjacente pour former le domino 🔗' : 'Touchez 2 cases adjacentes pour les lier en domino (ou touchez une liaison pour la retirer)')
+              : 'Cliquer sur une case pour changer les 👑'}
+          </span>
         </div>
       </div>
 
-      {/* 5. Grille Interactive (Tactile & Glisser de doigt instantané) */}
+      {/* 5. Grille Interactive */}
       <div className="flex justify-center p-2 sm:p-3 bg-slate-900/90 rounded-3xl border border-slate-800 shadow-xl overflow-x-auto">
         <div className="inline-block space-y-1 sm:space-y-1.5">
           {currentGrid.map((row, r) => (
@@ -347,6 +483,10 @@ export default function StepScore({
                 const isDomainHighlighted = highlightedDomain?.cells.some(
                   coord => coord.r === r && coord.c === c
                 );
+                const isIllegal = currentScoreData.illegalTiles?.some(
+                  coord => coord.r === r && coord.c === c
+                );
+                const isPending = pendingLinkSource && pendingLinkSource.r === r && pendingLinkSource.c === c;
 
                 return (
                   <TerrainTile
@@ -356,13 +496,17 @@ export default function StepScore({
                     col={c}
                     size={gridSize === 7 ? 'sm' : 'md'}
                     isHighlighted={isDomainHighlighted}
+                    isIllegalConnection={isIllegal}
+                    isLinkPending={isPending}
                     onClick={() => handleCellClick(r, c)}
                     onPointerDown={() => handlePointerDown(r, c)}
                     onPointerEnter={() => handlePointerEnter(r, c)}
                     onContextMenu={(e) => {
                       e.preventDefault();
+                      playTileSound();
                       const newGrid = currentGrid.map(row => row.map(cell => ({ ...cell })));
-                      newGrid[r][c] = { terrain: 'empty', crowns: 0 };
+                      unlinkCell(newGrid, r, c);
+                      newGrid[r][c] = { terrain: 'empty', crowns: 0, link: null };
                       setPlayerGrids({
                         ...playerGrids,
                         [currentPlayer.id]: newGrid
@@ -376,27 +520,35 @@ export default function StepScore({
         </div>
       </div>
 
-      {/* 6. Alertes de Règles */}
+      {/* 6. Alertes de Règles Intelligentes */}
       {currentScoreData.warnings.length > 0 && (
         <div className="space-y-1.5">
           {currentScoreData.warnings.map((w, idx) => (
             <div
               key={idx}
-              className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 text-xs text-amber-300"
+              className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs ${
+                w.type === 'illegal'
+                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 animate-pulse'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              }`}
             >
-              <AlertTriangle size={14} className="text-amber-400 flex-shrink-0" />
+              <AlertTriangle size={14} className={w.type === 'illegal' ? 'text-rose-400 flex-shrink-0' : 'text-amber-400 flex-shrink-0'} />
               <span>{w.text}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* 7. Bonus Officiels (Statuts épurés) */}
-      <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2">
+      {/* 7. Points Additionnels */}
+      <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2.5">
+        <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+          Points additionnels
+        </span>
+
         <div className="grid grid-cols-2 gap-2">
           {/* Empire du Milieu */}
           <div
-            className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all relative ${
+            className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
               currentScoreData.middleEmpireScore > 0
                 ? 'bg-amber-500/15 border-amber-400 shadow ring-1 ring-amber-400/40'
                 : 'bg-slate-950/60 border-slate-800'
@@ -406,8 +558,12 @@ export default function StepScore({
               <span className="text-xs font-bold text-slate-200">
                 🏰 Empire Milieu
               </span>
-              <span className="text-xs font-black text-amber-300 font-mono">
-                +10 pts
+              <span className={`text-[10px] font-black font-mono px-1.5 py-0.2 rounded-full ${
+                currentScoreData.middleEmpireScore > 0 
+                  ? 'bg-amber-400 text-slate-950' 
+                  : 'bg-slate-800 text-slate-500'
+              }`}>
+                {currentScoreData.middleEmpireScore > 0 ? '+10 pts' : '0 pt'}
               </span>
             </div>
 
@@ -422,7 +578,7 @@ export default function StepScore({
 
           {/* Harmonie */}
           <div
-            className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all relative ${
+            className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
               currentScoreData.harmonyScore > 0
                 ? 'bg-emerald-500/15 border-emerald-400 shadow ring-1 ring-emerald-400/40'
                 : 'bg-slate-950/60 border-slate-800'
@@ -432,8 +588,12 @@ export default function StepScore({
               <span className="text-xs font-bold text-slate-200">
                 ✨ Harmonie
               </span>
-              <span className="text-xs font-black text-emerald-300 font-mono">
-                +5 pts
+              <span className={`text-[10px] font-black font-mono px-1.5 py-0.2 rounded-full ${
+                currentScoreData.harmonyScore > 0 
+                  ? 'bg-emerald-400 text-slate-950' 
+                  : 'bg-slate-800 text-slate-500'
+              }`}>
+                {currentScoreData.harmonyScore > 0 ? '+5 pts' : '0 pt'}
               </span>
             </div>
 
@@ -449,20 +609,20 @@ export default function StepScore({
       </div>
 
       {/* 8. Liste des Domaines */}
-      <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-bold text-slate-200">
+      <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2.5">
+        <div className="space-y-0.5 text-left">
+          <span className="font-bold text-xs text-slate-200 block uppercase tracking-wider">
             Détail des Domaines ({currentScoreData.domains.length})
           </span>
           <div className="flex items-center gap-1 text-[11px] text-slate-400">
             <Info size={11} className="text-slate-400" />
-            <span>Touchez un domaine pour le surligner</span>
+            <span>Touchez un domaine pour le surligner sur la grille</span>
           </div>
         </div>
 
         {currentScoreData.domains.length === 0 ? (
           <p className="text-xs text-slate-500 italic p-2.5 text-center bg-slate-950/40 rounded-xl">
-            Aucun terrain posé pour l'instant.
+            Aucun terrain valide connecté pour l'instant.
           </p>
         ) : (
           <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
@@ -475,6 +635,7 @@ export default function StepScore({
                   key={dom.id}
                   type="button"
                   onClick={() => {
+                    playClickSound();
                     setHighlightedDomain(isHighlighted ? null : dom);
                   }}
                   className={`w-full p-2 rounded-xl border text-left flex items-center justify-between transition-all ${
@@ -502,7 +663,7 @@ export default function StepScore({
                     <div className={`text-xs font-black min-w-[45px] text-right font-mono ${
                       dom.score > 0 ? 'text-amber-300' : 'text-slate-600'
                     }`}>
-                      = {dom.score} <span className="text-[9px] font-sans text-slate-400">pts</span>
+                      = {dom.score} <span className="text-[9px] font-sans text-slate-400">{dom.score > 1 ? 'pts' : 'pt'}</span>
                     </div>
                   </div>
                 </button>
