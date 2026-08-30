@@ -19,9 +19,10 @@ export default function TerrainTile({
   const isCastle = cell.terrain === 'chateau';
   const isEmpty = cell.terrain === 'empty';
 
+  // Fix: Tailles rigides garanties avec min-width/min-height et aspect-square
   const sizeClasses = size === 'sm' 
-    ? 'h-10 w-10 sm:h-12 sm:w-12 text-xs' 
-    : 'h-13 w-13 sm:h-16 sm:w-16 text-sm';
+    ? 'w-10 h-10 min-w-[40px] min-h-[40px] sm:w-12 sm:h-12 sm:min-w-[48px] sm:min-h-[48px] rounded-xl text-xs flex-shrink-0 aspect-square' 
+    : 'w-14 h-14 min-w-[56px] min-h-[56px] sm:w-16 sm:h-16 sm:min-w-[64px] sm:min-h-[64px] rounded-2xl text-sm flex-shrink-0 aspect-square';
 
   return (
     <div
@@ -32,7 +33,7 @@ export default function TerrainTile({
       onPointerDown={onPointerDown}
       onPointerEnter={onPointerEnter}
       className={`
-        relative rounded-xl flex items-center justify-center 
+        relative flex items-center justify-center 
         transition-all duration-100 select-none cursor-pointer
         border-2 shadow-sm touch-none
         ${sizeClasses}
@@ -52,7 +53,7 @@ export default function TerrainTile({
       {/* Castle State (Just the icon, clean, centered, no conflicting text) */}
       {isCastle && (
         <div className="flex items-center justify-center text-slate-900">
-          <Castle size={size === 'sm' ? 22 : 28} className="fill-slate-900/30" />
+          <Castle size={size === 'sm' ? 20 : 28} className="fill-slate-900/30" />
         </div>
       )}
 
@@ -62,7 +63,7 @@ export default function TerrainTile({
           <div className="opacity-85">
             <TerrainIcon 
               type={cell.terrain} 
-              size={size === 'sm' ? 17 : 24} 
+              size={size === 'sm' ? 18 : 24} 
             />
           </div>
 
