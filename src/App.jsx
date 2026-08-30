@@ -6,7 +6,7 @@ import StepScore from './components/StepScore';
 import StepPodium from './components/StepPodium';
 import BreadcrumbDots from './components/BreadcrumbDots';
 import { createEmptyGrid } from './utils/scoreCalculator';
-import { Crown, Smartphone, Monitor, RotateCcw, ArrowRight, Trophy } from 'lucide-react';
+import { Crown, Smartphone, Monitor, RotateCcw, ArrowRight } from 'lucide-react';
 
 export default function App() {
   // Funnel Step: 0 (Players) -> 1 (Mode) -> 2 (TurnOrder) -> 3 (Score) -> 4 (Podium)
@@ -19,7 +19,7 @@ export default function App() {
   const [gameMode, setGameMode] = useState('duel'); // 'duel' (7x7) or 'classic' (5x5)
   const [gridSize, setGridSize] = useState(7);
 
-  // Persisted Turn Order (memorized across step navigation)
+  // Persisted Turn Order
   const [turnOrder, setTurnOrder] = useState([]);
 
   // Shared Grids State
@@ -43,7 +43,6 @@ export default function App() {
 
   const handleSetSelectedMeeples = (newMeeples) => {
     setSelectedMeeples(newMeeples);
-    // Invalidate memorized turn order whenever meeple selection changes
     setTurnOrder([]);
   };
 
@@ -79,14 +78,14 @@ export default function App() {
             type="button"
             disabled={!isPlayersReady}
             onClick={handleValidatePlayers}
-            className={`w-full py-4 px-6 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 transition-all ${
               isPlayersReady
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98]'
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98]'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
             }`}
           >
-            <span>{isPlayersReady ? `Valider les ${selectedMeeples.length} joueurs` : 'Choisissez au moins 2 joueurs'}</span>
-            {isPlayersReady && <ArrowRight size={18} />}
+            <span>{isPlayersReady ? 'Valider' : '2 joueurs min.'}</span>
+            {isPlayersReady && <ArrowRight size={17} />}
           </button>
         );
       case 1:
@@ -94,10 +93,10 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(2)}
-            className="w-full py-4 px-6 rounded-2xl font-black text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
-            <span>Lancer le Tirage au Sort</span>
-            <ArrowRight size={18} />
+            <span>Continuer</span>
+            <ArrowRight size={17} />
           </button>
         );
       case 2:
@@ -105,10 +104,10 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(3)}
-            className="w-full py-4 px-6 rounded-2xl font-black text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-xl shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
-            <span>Passer aux Scores</span>
-            <ArrowRight size={18} />
+            <span>Scores</span>
+            <ArrowRight size={17} />
           </button>
         );
       case 3:
@@ -116,11 +115,10 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(4)}
-            className="w-full py-4 px-6 rounded-2xl font-black text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
-            <Trophy size={18} className="fill-slate-950" />
-            <span>Voir le Podium Final</span>
-            <ArrowRight size={18} />
+            <span>Podium</span>
+            <ArrowRight size={17} />
           </button>
         );
       case 4:
@@ -128,10 +126,10 @@ export default function App() {
           <button
             type="button"
             onClick={handleResetGame}
-            className="w-full py-4 px-6 rounded-2xl font-black text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-xl shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
-            <RotateCcw size={17} />
-            <span>Nouvelle Partie</span>
+            <RotateCcw size={16} />
+            <span>Rejouer</span>
           </button>
         );
       default:
@@ -140,135 +138,135 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-between antialiased relative">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between antialiased relative">
       {/* Background ambient lighting */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-500/10 rounded-full blur-[130px]"></div>
         <div className="absolute -bottom-40 right-10 w-[500px] h-[400px] bg-indigo-600/10 rounded-full blur-[130px]"></div>
       </div>
 
-      {/* Top Navbar */}
-      <header className="w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-40">
-        <div className="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between">
-          <div 
-            onClick={() => goToStep(0)}
-            className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+      {/* Clean Mobile-First Header (Non-sticky) */}
+      <header className="w-full max-w-md mx-auto px-4 pt-3 pb-1 flex items-center justify-between z-30">
+        <div 
+          onClick={() => goToStep(0)}
+          className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+        >
+          <div className="p-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-md">
+            <Crown size={18} className="fill-slate-950" />
+          </div>
+          <div>
+            <span className="font-medieval font-black text-base tracking-wide text-amber-200 block leading-tight">
+              KingdomiGuide
+            </span>
+            <span className="text-[9px] text-slate-400 font-medium tracking-wider uppercase block">
+              Compagnon Kingdomino
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setIsMobileFrame(!isMobileFrame)}
+            className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] font-semibold text-slate-300 hover:text-white transition-all"
+            title="Basculer la vue simulateur smartphone"
           >
-            <div className="p-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-md">
-              <Crown size={18} className="fill-slate-950" />
-            </div>
-            <div>
-              <span className="font-medieval font-black text-base tracking-wide text-amber-200 block leading-tight">
-                KingdomiGuide
-              </span>
-              <span className="text-[9px] text-slate-400 font-medium tracking-wider uppercase block">
-                Compagnon Kingdomino
-              </span>
-            </div>
-          </div>
+            {isMobileFrame ? <Monitor size={13} /> : <Smartphone size={13} />}
+            <span>{isMobileFrame ? 'Plein Écran' : 'Vue Mobile'}</span>
+          </button>
 
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setIsMobileFrame(!isMobileFrame)}
-              className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-[11px] font-semibold text-slate-300 hover:text-white transition-all"
-              title="Basculer la vue simulateur smartphone"
-            >
-              {isMobileFrame ? <Monitor size={13} /> : <Smartphone size={13} />}
-              <span>{isMobileFrame ? 'Plein Écran' : 'Vue Mobile'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleResetGame}
-              className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-amber-400 hover:bg-slate-700 transition-all"
-              title="Réinitialiser"
-            >
-              <RotateCcw size={15} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleResetGame}
+            className="p-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-all"
+            title="Réinitialiser"
+          >
+            <RotateCcw size={15} />
+          </button>
         </div>
       </header>
 
-      {/* Main Content Area (Flexible & Scrollable) */}
-      <main className={`w-full flex-1 flex flex-col justify-start py-4 px-3 z-10 ${
+      {/* Main Content Area (Natural flex column with content expanding and footer at bottom) */}
+      <main className={`w-full flex-1 flex flex-col justify-start mx-auto py-2 px-3 z-10 ${
         isMobileFrame ? 'max-w-md my-2 rounded-3xl border-4 border-slate-800 bg-slate-950 shadow-2xl overflow-hidden min-h-[820px]' : 'max-w-md'
       }`}>
-        <div className="w-full flex-1 pb-6">
-          {currentStep === 0 && (
-            <StepPlayers
-              selectedMeeples={selectedMeeples}
-              setSelectedMeeples={handleSetSelectedMeeples}
-              playerNames={playerNames}
-              setPlayerNames={setPlayerNames}
-            />
-          )}
+        <div className="w-full flex-1 flex flex-col justify-between space-y-4">
+          {/* Écrans du Tunnel UX */}
+          <div className="w-full space-y-4 flex-1">
+            {currentStep === 0 && (
+              <StepPlayers
+                selectedMeeples={selectedMeeples}
+                setSelectedMeeples={handleSetSelectedMeeples}
+                playerNames={playerNames}
+                setPlayerNames={setPlayerNames}
+              />
+            )}
 
-          {currentStep === 1 && (
-            <StepGameMode
-              playerCount={selectedMeeples.length}
-              gameMode={gameMode}
-              setGameMode={(mode) => {
-                setGameMode(mode);
-                const newSize = (selectedMeeples.length === 2 && mode === 'duel') ? 7 : 5;
-                setGridSize(newSize);
-                const updated = {};
-                selectedMeeples.forEach(id => {
-                  updated[id] = createEmptyGrid(newSize);
-                });
-                setPlayerGrids(updated);
-              }}
-            />
-          )}
+            {currentStep === 1 && (
+              <StepGameMode
+                playerCount={selectedMeeples.length}
+                gameMode={gameMode}
+                setGameMode={(mode) => {
+                  setGameMode(mode);
+                  const newSize = (selectedMeeples.length === 2 && mode === 'duel') ? 7 : 5;
+                  setGridSize(newSize);
+                  const updated = {};
+                  selectedMeeples.forEach(id => {
+                    updated[id] = createEmptyGrid(newSize);
+                  });
+                  setPlayerGrids(updated);
+                }}
+              />
+            )}
 
-          {currentStep === 2 && (
-            <StepTurnOrder
-              selectedMeeples={selectedMeeples}
-              playerNames={playerNames}
-              playerCount={selectedMeeples.length}
-              turnOrder={turnOrder}
-              setTurnOrder={setTurnOrder}
-            />
-          )}
+            {currentStep === 2 && (
+              <StepTurnOrder
+                selectedMeeples={selectedMeeples}
+                playerNames={playerNames}
+                playerCount={selectedMeeples.length}
+                turnOrder={turnOrder}
+                setTurnOrder={setTurnOrder}
+              />
+            )}
 
-          {currentStep === 3 && (
-            <StepScore
-              selectedMeeples={selectedMeeples}
-              playerNames={playerNames}
-              playerGrids={playerGrids}
-              setPlayerGrids={setPlayerGrids}
-              gridSize={gridSize}
-              setGridSize={setGridSize}
-              bonuses={bonuses}
-              setBonuses={setBonuses}
-            />
-          )}
+            {currentStep === 3 && (
+              <StepScore
+                selectedMeeples={selectedMeeples}
+                playerNames={playerNames}
+                playerGrids={playerGrids}
+                setPlayerGrids={setPlayerGrids}
+                gridSize={gridSize}
+                setGridSize={setGridSize}
+                bonuses={bonuses}
+                setBonuses={setBonuses}
+              />
+            )}
 
-          {currentStep === 4 && (
-            <StepPodium
-              selectedMeeples={selectedMeeples}
-              playerNames={playerNames}
-              playerGrids={playerGrids}
-              bonuses={bonuses}
-            />
-          )}
+            {currentStep === 4 && (
+              <StepPodium
+                selectedMeeples={selectedMeeples}
+                playerNames={playerNames}
+                playerGrids={playerGrids}
+                bonuses={bonuses}
+                onResetGame={handleResetGame}
+              />
+            )}
+          </div>
+
+          {/* Bottom Row: Fil d'Ariane & Bouton d'action sur la MÊME LIGNE */}
+          <div className="mt-auto pt-3 pb-4 max-w-sm mx-auto w-full">
+            <div className="flex items-center gap-2.5 w-full">
+              <BreadcrumbDots
+                currentStep={currentStep}
+                setStep={goToStep}
+                maxUnlockedStep={maxUnlockedStep}
+              />
+
+              {renderActionButton()}
+            </div>
+          </div>
         </div>
       </main>
-
-      {/* Sticky Bottom Actions & Stepper Footer */}
-      <footer className="w-full sticky bottom-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/80 py-3 px-4 shadow-2xl">
-        <div className="max-w-sm mx-auto space-y-2.5">
-          {/* Main Action Button */}
-          {renderActionButton()}
-
-          {/* Breadcrumb Dots */}
-          <BreadcrumbDots
-            currentStep={currentStep}
-            setStep={goToStep}
-            maxUnlockedStep={maxUnlockedStep}
-          />
-        </div>
-      </footer>
     </div>
   );
 }

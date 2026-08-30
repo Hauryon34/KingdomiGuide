@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * Nouveau design de Meeple / Pion KingdomiGuide
- * Inspiré de la figurine minimale dodue debout, bras le long du corps, style bois laqué avec couronne
+ * Inspiré de la figurine minimale dodue debout, bras le long du corps, style bois laqué avec couronne classique emoji 👑
  */
 export default function MeepleIcon({ color = '#0284c7', size = 48, className = '', showCrown = true }) {
   const cleanId = color.replace('#', '');
@@ -31,10 +31,11 @@ export default function MeepleIcon({ color = '#0284c7', size = 48, className = '
             <stop offset="100%" stopColor="#000000" stopOpacity="0.35" />
           </linearGradient>
 
-          {/* Reflet de brillance sur le côté gauche */}
-          <linearGradient id={`highlight-${cleanId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          {/* Dégradé d'or royal pour la couronne */}
+          <linearGradient id={`gold-crown-${cleanId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FEF08A" />
+            <stop offset="45%" stopColor="#FACC15" />
+            <stop offset="100%" stopColor="#D97706" />
           </linearGradient>
         </defs>
 
@@ -42,7 +43,6 @@ export default function MeepleIcon({ color = '#0284c7', size = 48, className = '
         <ellipse cx="50" cy="112" rx="26" ry="7" fill="#000000" opacity="0.35" />
 
         {/* Corps du bonhomme dodu debout, bras le long du corps */}
-        {/* Bras gauches et droits intégrés + torse cylindrique + jambes courtes arrondies */}
         <g filter={`url(#wood-shadow-${cleanId})`}>
           {/* Tête ronde dodue */}
           <circle
@@ -88,7 +88,7 @@ export default function MeepleIcon({ color = '#0284c7', size = 48, className = '
             strokeWidth="2.5"
           />
 
-          {/* Ligne douce de séparation des bras le long du corps */}
+          {/* Lignes douces de séparation des bras */}
           <path
             d="M 33,57 C 32,68 32,80 34,87"
             stroke="rgba(0,0,0,0.25)"
@@ -113,18 +113,40 @@ export default function MeepleIcon({ color = '#0284c7', size = 48, className = '
           />
         </g>
 
-        {/* Petite couronne dorée sur la tête */}
+        {/* Couronne classique style emoji 👑 posée fièrement sur la tête */}
         {showCrown && (
-          <g transform="translate(32, 8) scale(0.75)">
+          <g transform="translate(34, 4)">
+            {/* Corps de la couronne à 3 pointes majestueuses */}
             <path
-              d="M 4,24 L 8,10 L 24,18 L 40,10 L 44,24 Z"
-              fill="#FACC15"
-              stroke="#B45309"
-              strokeWidth="2.5"
+              d="M 2,16 
+                 L 4,5 
+                 L 11,11 
+                 L 16,2 
+                 L 21,11 
+                 L 28,5 
+                 L 30,16 
+                 Z"
+              fill={`url(#gold-crown-${cleanId})`}
+              stroke="#78350F"
+              strokeWidth="1.8"
+              strokeLinejoin="round"
             />
-            <circle cx="8" cy="10" r="3" fill="#FEF08A" stroke="#B45309" strokeWidth="1" />
-            <circle cx="24" cy="18" r="3" fill="#FEF08A" stroke="#B45309" strokeWidth="1" />
-            <circle cx="40" cy="10" r="3" fill="#FEF08A" stroke="#B45309" strokeWidth="1" />
+            {/* Bandeau inférieur de la couronne */}
+            <path
+              d="M 2,16 Q 16,19 30,16 L 30,19 Q 16,22 2,19 Z"
+              fill="#D97706"
+              stroke="#78350F"
+              strokeWidth="1.2"
+            />
+            {/* Petites perles dorées brillantes au sommet de chaque pointe */}
+            <circle cx="4" cy="5" r="2" fill="#FEF08A" stroke="#78350F" strokeWidth="1" />
+            <circle cx="16" cy="2" r="2.2" fill="#FEF08A" stroke="#78350F" strokeWidth="1" />
+            <circle cx="28" cy="5" r="2" fill="#FEF08A" stroke="#78350F" strokeWidth="1" />
+
+            {/* Petites gemmes colorées sur le bandeau */}
+            <circle cx="8" cy="17.5" r="1.2" fill="#EF4444" />
+            <circle cx="16" cy="18" r="1.4" fill="#3B82F6" />
+            <circle cx="24" cy="17.5" r="1.2" fill="#10B981" />
           </g>
         )}
       </svg>

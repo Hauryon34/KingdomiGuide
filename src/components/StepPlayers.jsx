@@ -57,11 +57,11 @@ export default function StepPlayers({
         })}
       </div>
 
-      {/* Champs de prénoms dynamiques en liste dessous */}
+      {/* Champs de prénoms dynamiques sous l'intitulé "Participants :" */}
       {selectedMeeples.length > 0 && (
         <div className="space-y-2.5 pt-2 animate-fade-in text-left">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">
-            Prénoms des joueurs (optionnel) :
+            Participants :
           </p>
           <div className="space-y-2">
             {selectedMeeples.map((meepleId, idx) => {

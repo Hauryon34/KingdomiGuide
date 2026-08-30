@@ -10,7 +10,7 @@ const STEPS = [
 
 export default function BreadcrumbDots({ currentStep, setStep, maxUnlockedStep = 4 }) {
   return (
-    <div className="flex items-center justify-center gap-2 py-3 px-4 bg-slate-900/90 backdrop-blur-md rounded-full border border-slate-800 shadow-lg mx-auto w-fit">
+    <div className="flex items-center justify-center gap-1.5 py-3.5 px-3 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-md flex-shrink-0">
       {STEPS.map((s) => {
         const isActive = currentStep === s.id;
         const isClickable = s.id <= maxUnlockedStep;
@@ -21,12 +21,12 @@ export default function BreadcrumbDots({ currentStep, setStep, maxUnlockedStep =
             type="button"
             disabled={!isClickable}
             onClick={() => setStep(s.id)}
-            className={`transition-all duration-300 flex items-center justify-center ${
+            className={`transition-all duration-200 flex items-center justify-center ${
               isActive
-                ? 'w-8 h-3 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 shadow-md shadow-amber-500/40 ring-1 ring-amber-300'
+                ? 'w-5 h-2.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 shadow-sm ring-1 ring-amber-300'
                 : isClickable
-                ? 'w-3 h-3 rounded-full bg-slate-700 hover:bg-slate-500 cursor-pointer'
-                : 'w-2 h-2 rounded-full bg-slate-800/60 cursor-not-allowed opacity-40'
+                ? 'w-2.5 h-2.5 rounded-full bg-slate-700 hover:bg-slate-500 cursor-pointer'
+                : 'w-1.5 h-1.5 rounded-full bg-slate-800/60 cursor-not-allowed opacity-30'
             }`}
             title={s.label}
           />

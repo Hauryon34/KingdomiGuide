@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { TERRAINS, MEEPLES } from '../types/kingdomino';
 import { 
   calculateKingdomScore, 
@@ -14,7 +14,7 @@ import {
   RotateCcw, 
   AlertTriangle,
   Camera,
-  Sparkles
+  Info
 } from 'lucide-react';
 
 export default function StepScore({
@@ -29,9 +29,14 @@ export default function StepScore({
 }) {
   const [activePlayerId, setActivePlayerId] = useState(selectedMeeples[0] || 'blue');
   const [selectedTerrain, setSelectedTerrain] = useState('champs');
-  const [selectedCrowns, setSelectedCrowns] = useState(1);
   const [highlightedDomain, setHighlightedDomain] = useState(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+
+  // Pointer drag painting state
+  const isPointerDownRef = useRef(false);
+  const hasDraggedRef = useRef(false);
+  const initialTouchCellHadSameTerrainRef = useRef(false);
+  const lastPaintedCoordRef = useRef(null);
 
   const activePlayers = selectedMeeples.map((meepleId, index) => {
     const meeple = MEEPLES.find(m => m.id === meepleId) || MEEPLES[index];
@@ -67,7 +72,8 @@ export default function StepScore({
     setHighlightedDomain(null);
   };
 
-  const handleCellClick = (r, c) => {
+  // Helper to paint a cell with current brush
+  const paintCell = (r, c, cycleCrownsIfSame = false) => {
     const cell = currentGrid[r][c];
     const newGrid = currentGrid.map(row => row.map(cell => ({ ...cell })));
 
@@ -83,14 +89,14 @@ export default function StepScore({
       }
       newGrid[r][c] = { terrain: 'chateau', crowns: 0 };
     } else {
-      if (cell.terrain === selectedTerrain) {
+      if (cycleCrownsIfSame && cell.terrain === selectedTerrain) {
         const maxCr = TERRAINS[selectedTerrain].maxCrowns;
         const nextCrowns = (cell.crowns + 1) > maxCr ? 0 : cell.crowns + 1;
         newGrid[r][c] = { terrain: selectedTerrain, crowns: nextCrowns };
       } else {
-        const maxCr = TERRAINS[selectedTerrain].maxCrowns;
-        const crownsToApply = Math.min(selectedCrowns, maxCr);
-        newGrid[r][c] = { terrain: selectedTerrain, crowns: crownsToApply };
+        // Place terrain with 0 crowns by default (or keep existing crowns if same)
+        const crownsToSet = (cell.terrain === selectedTerrain) ? cell.crowns : 0;
+        newGrid[r][c] = { terrain: selectedTerrain, crowns: crownsToSet };
       }
     }
 
@@ -98,6 +104,43 @@ export default function StepScore({
       ...playerGrids,
       [currentPlayer.id]: newGrid
     });
+  };
+
+  // Drag painting pointer events: paints immediately on first touch!
+  const handlePointerDown = (r, c) => {
+    isPointerDownRef.current = true;
+    hasDraggedRef.current = false;
+    lastPaintedCoordRef.current = `${r}-${c}`;
+    
+    const cell = currentGrid[r][c];
+    initialTouchCellHadSameTerrainRef.current = (cell.terrain === selectedTerrain);
+
+    // If cell has different terrain, paint it immediately on pointer down!
+    if (cell.terrain !== selectedTerrain) {
+      paintCell(r, c, false);
+    }
+  };
+
+  const handlePointerEnter = (r, c) => {
+    if (!isPointerDownRef.current) return;
+    const coordKey = `${r}-${c}`;
+    if (lastPaintedCoordRef.current === coordKey) return;
+
+    hasDraggedRef.current = true;
+    lastPaintedCoordRef.current = coordKey;
+    paintCell(r, c, false); // Drag paint mode
+  };
+
+  const handlePointerUp = () => {
+    isPointerDownRef.current = false;
+  };
+
+  const handleCellClick = (r, c) => {
+    // If it was a single tap without dragging and the cell already had the same terrain, cycle crowns!
+    if (!hasDraggedRef.current && initialTouchCellHadSameTerrainRef.current) {
+      paintCell(r, c, true);
+    }
+    hasDraggedRef.current = false;
   };
 
   const handleResetCurrentGrid = () => {
@@ -132,8 +175,17 @@ export default function StepScore({
     });
   };
 
+  const formatEmptyCells = (count) => {
+    if (count === 0) return 'Grille pleine';
+    if (count === 1) return '1 case vide';
+    return `${count} cases vides`;
+  };
+
   return (
-    <div className="space-y-4 max-w-sm sm:max-w-md mx-auto px-1 animate-fade-in">
+    <div 
+      className="space-y-4 max-w-sm sm:max-w-md mx-auto px-1 animate-fade-in select-none"
+      onPointerUp={handlePointerUp}
+    >
       {/* 1. Sélecteur de Joueur (Compact) */}
       <div className="bg-slate-900/90 rounded-2xl p-1.5 border border-slate-800 shadow-md">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -254,15 +306,8 @@ export default function StepScore({
         </div>
       </div>
 
-      {/* 4. Palette d'Outils Compacte */}
+      {/* 4. Palette d'Outils (Gomme, Château, 6 Terrains) */}
       <div className="bg-slate-900/95 rounded-2xl p-2.5 border border-slate-800 shadow-md space-y-2">
-        <div className="flex items-center justify-between text-[11px]">
-          <span className="font-bold text-slate-300">Pinceau terrain :</span>
-          <span className="text-amber-400/90 text-[10px]">
-            Clic case = change les 👑
-          </span>
-        </div>
-
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
           {Object.entries(TERRAINS).map(([key, terrain]) => {
             const isSelected = selectedTerrain === key;
@@ -270,15 +315,8 @@ export default function StepScore({
               <button
                 key={key}
                 type="button"
-                onClick={() => {
-                  setSelectedTerrain(key);
-                  if (key === 'champs' || key === 'foret' || key === 'eau') {
-                    if (selectedCrowns > 1) setSelectedCrowns(1);
-                  } else if (key === 'prairie' || key === 'marais') {
-                    if (selectedCrowns > 2) setSelectedCrowns(2);
-                  }
-                }}
-                className={`py-1.5 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all ${
+                onClick={() => setSelectedTerrain(key)}
+                className={`py-2 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all ${
                   isSelected
                     ? 'ring-2 ring-amber-400 scale-102 shadow-md border-amber-300 ' + terrain.bgClass
                     : 'bg-slate-950/60 border-slate-800 hover:bg-slate-800 opacity-70 hover:opacity-100'
@@ -293,43 +331,14 @@ export default function StepScore({
           })}
         </div>
 
-        {!['empty', 'chateau'].includes(selectedTerrain) && (
-          <div className="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-xs">
-            <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-              <Crown size={12} className="text-amber-400 fill-amber-400" />
-              Couronnes par défaut :
-            </span>
-            <div className="flex items-center gap-1">
-              {[0, 1, 2, 3].map((num) => {
-                const maxAllowed = TERRAINS[selectedTerrain]?.maxCrowns ?? 3;
-                const isDisabled = num > maxAllowed;
-                const isPicked = selectedCrowns === num;
-
-                return (
-                  <button
-                    key={num}
-                    type="button"
-                    disabled={isDisabled}
-                    onClick={() => setSelectedCrowns(num)}
-                    className={`w-7 h-6 rounded-lg text-[11px] font-black transition-all flex items-center justify-center gap-0.5 ${
-                      isPicked
-                        ? 'bg-amber-400 text-slate-950 shadow ring-1 ring-yellow-300'
-                        : isDisabled
-                        ? 'bg-slate-950 text-slate-700 cursor-not-allowed opacity-30'
-                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                    }`}
-                  >
-                    <span>{num}</span>
-                    {num > 0 && <Crown size={9} className={isPicked ? 'fill-slate-950' : 'fill-amber-400 text-amber-400'} />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Tip text en gris léger avec icône info */}
+        <div className="flex items-center justify-center gap-1 text-[11px] text-slate-400/80 pt-0.5">
+          <Info size={12} className="text-slate-400" />
+          <span>Cliquer sur une case pour changer les 👑 • Glisser pour peindre</span>
+        </div>
       </div>
 
-      {/* 5. Grille Interactive */}
+      {/* 5. Grille Interactive (Tactile & Glisser de doigt instantané) */}
       <div className="flex justify-center p-2 sm:p-3 bg-slate-900/90 rounded-3xl border border-slate-800 shadow-xl overflow-x-auto">
         <div className="inline-block space-y-1 sm:space-y-1.5">
           {currentGrid.map((row, r) => (
@@ -348,6 +357,8 @@ export default function StepScore({
                     size={gridSize === 7 ? 'sm' : 'md'}
                     isHighlighted={isDomainHighlighted}
                     onClick={() => handleCellClick(r, c)}
+                    onPointerDown={() => handlePointerDown(r, c)}
+                    onPointerEnter={() => handlePointerEnter(r, c)}
                     onContextMenu={(e) => {
                       e.preventDefault();
                       const newGrid = currentGrid.map(row => row.map(cell => ({ ...cell })));
@@ -380,26 +391,15 @@ export default function StepScore({
         </div>
       )}
 
-      {/* 7. Bonus Officiels */}
+      {/* 7. Bonus Officiels (Statuts épurés) */}
       <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-          <span>Bonus de Règles</span>
-          <span className="text-slate-400 font-normal text-[10px]">
-            Toucher pour activer/désactiver
-          </span>
-        </div>
-
         <div className="grid grid-cols-2 gap-2">
           {/* Empire du Milieu */}
-          <button
-            type="button"
-            onClick={() => setBonuses(prev => ({ ...prev, middleEmpire: !prev.middleEmpire }))}
+          <div
             className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all relative ${
               currentScoreData.middleEmpireScore > 0
                 ? 'bg-amber-500/15 border-amber-400 shadow ring-1 ring-amber-400/40'
-                : bonuses.middleEmpire
-                ? 'bg-slate-950/60 border-slate-800'
-                : 'bg-slate-950/20 border-slate-900 opacity-50'
+                : 'bg-slate-950/60 border-slate-800'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -407,29 +407,25 @@ export default function StepScore({
                 🏰 Empire Milieu
               </span>
               <span className="text-xs font-black text-amber-300 font-mono">
-                +{currentScoreData.middleEmpireScore}
+                +10 pts
               </span>
             </div>
 
             <div className="mt-1.5 text-[10px] flex items-center gap-1 font-medium">
               {currentScoreData.isCastleCentered ? (
-                <span className="text-emerald-400">✓ Château centré (+10)</span>
+                <span className="text-emerald-400">✓ Château centré</span>
               ) : (
-                <span className="text-slate-400">✗ Non centré (+0)</span>
+                <span className="text-slate-400">✗ Château non centré</span>
               )}
             </div>
-          </button>
+          </div>
 
           {/* Harmonie */}
-          <button
-            type="button"
-            onClick={() => setBonuses(prev => ({ ...prev, harmony: !prev.harmony }))}
+          <div
             className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all relative ${
               currentScoreData.harmonyScore > 0
                 ? 'bg-emerald-500/15 border-emerald-400 shadow ring-1 ring-emerald-400/40'
-                : bonuses.harmony
-                ? 'bg-slate-950/60 border-slate-800'
-                : 'bg-slate-950/20 border-slate-900 opacity-50'
+                : 'bg-slate-950/60 border-slate-800'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -437,18 +433,18 @@ export default function StepScore({
                 ✨ Harmonie
               </span>
               <span className="text-xs font-black text-emerald-300 font-mono">
-                +{currentScoreData.harmonyScore}
+                +5 pts
               </span>
             </div>
 
             <div className="mt-1.5 text-[10px] flex items-center gap-1 font-medium">
               {currentScoreData.isCompleteKingdom ? (
-                <span className="text-emerald-400">✓ Grille pleine (+5)</span>
+                <span className="text-emerald-400">✓ Grille pleine</span>
               ) : (
-                <span className="text-slate-400">✗ {currentScoreData.emptyCells} vide(s)</span>
+                <span className="text-slate-400">✗ {formatEmptyCells(currentScoreData.emptyCells)}</span>
               )}
             </div>
-          </button>
+          </div>
         </div>
       </div>
 
@@ -458,9 +454,10 @@ export default function StepScore({
           <span className="font-bold text-slate-200">
             Détail des Domaines ({currentScoreData.domains.length})
           </span>
-          <span className="text-[10px] text-amber-400">
-            Touchez pour surligner
-          </span>
+          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+            <Info size={11} className="text-slate-400" />
+            <span>Touchez un domaine pour le surligner</span>
+          </div>
         </div>
 
         {currentScoreData.domains.length === 0 ? (

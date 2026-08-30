@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Sparkles, X, Check, Upload, AlertCircle, RefreshCw } from 'lucide-react';
+import { Camera, Sparkles, X, Check, RefreshCw, AlertCircle } from 'lucide-react';
 import { analyzeKingdomImageLocally, analyzeKingdomImageWithAI } from '../utils/visionScanner';
 import { calculateKingdomScore } from '../utils/scoreCalculator';
-import TerrainTile from './TerrainTile';
 
 export default function KingdomScannerModal({
   isOpen,
@@ -46,7 +45,6 @@ export default function KingdomScannerModal({
         const grid = await analyzeKingdomImageWithAI(imageSrc, gridSize, apiKey.trim());
         setDetectedGrid(grid);
       } else {
-        // Local Canvas Colorimetry & Segmentation
         const img = new Image();
         img.src = imageSrc;
         await new Promise((resolve) => { img.onload = resolve; });
@@ -71,8 +69,8 @@ export default function KingdomScannerModal({
   const scoreData = detectedGrid ? calculateKingdomScore(detectedGrid) : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 w-full max-w-md shadow-2xl space-y-4 relative my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 w-full max-w-md shadow-2xl space-y-4 relative my-auto max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
@@ -91,7 +89,7 @@ export default function KingdomScannerModal({
             Scanner le Royaume ({gridSize}×{gridSize})
           </h3>
           <p className="text-xs text-slate-400">
-            Prenez en photo le domaine de <strong className="text-slate-200">{playerName}</strong>
+            Photo du domaine de <strong className="text-slate-200">{playerName}</strong>
           </p>
         </div>
 
@@ -105,47 +103,45 @@ export default function KingdomScannerModal({
           className="hidden"
         />
 
-        {/* Photo Upload & Preview Zone */}
+        {/* Photo Upload Zone */}
         {!imageSrc ? (
           <div className="space-y-3">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full py-12 px-4 rounded-3xl border-2 border-dashed border-amber-500/40 bg-slate-950/60 hover:bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-300 hover:text-amber-300 transition-all cursor-pointer"
+              className="w-full py-10 px-4 rounded-3xl border-2 border-dashed border-amber-500/40 bg-slate-950/60 hover:bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-300 hover:text-amber-300 transition-all cursor-pointer"
             >
-              <div className="p-4 rounded-full bg-amber-500/20 text-amber-400">
-                <Camera size={32} />
+              <div className="p-3.5 rounded-full bg-amber-500/20 text-amber-400">
+                <Camera size={30} />
               </div>
               <div className="text-center space-y-0.5">
                 <span className="text-sm font-bold text-slate-100 block">
                   Prendre une photo du dessus
                 </span>
                 <span className="text-[11px] text-slate-400 block">
-                  ou sélectionner une photo dans la galerie
+                  ou choisir dans la galerie
                 </span>
               </div>
             </button>
 
             <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-              <span className="font-bold text-amber-300 block">💡 Conseils pour une photo parfaite :</span>
+              <span className="font-bold text-amber-300 block">💡 Conseils :</span>
               <ul className="list-disc pl-4 space-y-0.5">
-                <li>Prenez la photo bien à la verticale (du dessus).</li>
-                <li>Évitez les ombres fortes et les reflets directs.</li>
-                <li>Cadrez l'ensemble des dominos dans la grille.</li>
+                <li>Prenez la photo bien à la verticale du plateau.</li>
+                <li>Cadrez l'ensemble des dominos dans le carré.</li>
               </ul>
             </div>
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Image Preview with alignment grid */}
-            <div className="relative rounded-2xl overflow-hidden border-2 border-slate-700 max-h-60 bg-black flex items-center justify-center">
+            {/* Image Preview with grid overlay */}
+            <div className="relative rounded-2xl overflow-hidden border-2 border-slate-700 max-h-56 bg-black flex items-center justify-center">
               <img
                 src={imageSrc}
-                alt="Aperçu royaume"
-                className="max-h-60 w-full object-contain"
+                alt="Aperçu"
+                className="max-h-56 w-full object-contain"
               />
 
-              {/* Reticle / Grid Overlay */}
               <div className="absolute inset-0 grid pointer-events-none opacity-40 border border-amber-400"
                 style={{
                   gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
@@ -176,7 +172,7 @@ export default function KingdomScannerModal({
                 className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50"
               >
                 <Sparkles size={15} />
-                <span>{isAnalyzing ? "Analyse de l'image..." : "Analyser la Grille"}</span>
+                <span>{isAnalyzing ? "Analyse..." : "Analyser la Grille"}</span>
               </button>
             </div>
           </div>
@@ -196,14 +192,14 @@ export default function KingdomScannerModal({
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                 <Check size={16} />
-                Royaume détecté avec succès !
+                Domaines détectés !
               </span>
               <span className="text-sm font-black font-medieval text-amber-300">
                 {scoreData?.totalScore} pts
               </span>
             </div>
 
-            {/* Small mini-grid preview */}
+            {/* Mini preview */}
             <div className="flex justify-center py-1">
               <div className="inline-block space-y-0.5">
                 {detectedGrid.map((row, r) => (
@@ -222,7 +218,7 @@ export default function KingdomScannerModal({
                           'bg-slate-900 border-slate-800'
                         }`}
                       >
-                        {cell.crowns > 0 ? `${cell.crowns}👑` : ''}
+                        {cell.terrain === 'chateau' ? '🏰' : ''}
                       </div>
                     ))}
                   </div>
@@ -230,11 +226,11 @@ export default function KingdomScannerModal({
               </div>
             </div>
 
-            {/* Apply Button */}
+            {/* Apply Button (Always clear and visible) */}
             <button
               type="button"
               onClick={handleApply}
-              className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all"
+              className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all"
             >
               <Check size={16} />
               <span>Valider & Appliquer à ma Grille</span>
@@ -242,20 +238,20 @@ export default function KingdomScannerModal({
           </div>
         )}
 
-        {/* Optional Gemini API key toggle for 100% cloud precision */}
+        {/* Optional Gemini API key */}
         <div className="pt-1 text-center">
           <button
             type="button"
             onClick={() => setShowApiKeyInput(!showApiKeyInput)}
             className="text-[10px] text-slate-500 hover:text-slate-300 underline"
           >
-            {showApiKeyInput ? "Masquer les réglages IA" : "⚙️ Option : Activer l'IA Vision Cloud (Gemini)"}
+            {showApiKeyInput ? "Masquer les réglages" : "⚙️ Option : Activer l'IA Vision Cloud (Gemini)"}
           </button>
 
           {showApiKeyInput && (
             <div className="mt-2 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-left space-y-1.5 animate-fade-in">
               <label className="text-[10px] text-slate-400 block font-medium">
-                Clé API Google Gemini (Optionnelle - pour IA Vision haute fidélité) :
+                Clé API Google Gemini (Optionnelle) :
               </label>
               <input
                 type="password"

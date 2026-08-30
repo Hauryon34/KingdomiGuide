@@ -1,17 +1,51 @@
 /**
  * Moteur de reconnaissance visuelle pour scanner un royaume Kingdomino
- * Comprend :
- * 1. Moteur d'analyse visuelle par colorimétrie & segmentation de canvas (100% hors-ligne)
- * 2. Connecteur optionnel IA Multimodale (Gemini Vision) pour une précision de 100%
+ * Échantillonne la zone centrale de chaque tuile et classe par distance colorimétrique
  */
 
 import { createEmptyGrid } from './scoreCalculator';
 
+// Palette colorimétrique de référence des tuiles physiques de Kingdomino (RGB)
+const TERRAIN_PALETTES = {
+  champs: [
+    { r: 235, g: 185, b: 40 },   // Jaune blé vif
+    { r: 215, g: 160, b: 35 },   // Doré
+    { r: 240, g: 200, b: 60 }    // Paille claire
+  ],
+  eau: [
+    { r: 40, g: 120, b: 205 },   // Bleu lac
+    { r: 25, g: 85, b: 165 },    // Bleu profond
+    { r: 70, g: 155, b: 225 }    // Bleu clair
+  ],
+  foret: [
+    { r: 25, g: 80, b: 40 },     // Vert sapin foncé
+    { r: 35, g: 105, b: 50 },    // Vert forêt
+    { r: 20, g: 65, b: 30 }      // Vert sombre
+  ],
+  prairie: [
+    { r: 135, g: 195, b: 60 },   // Vert pomme / prairie clair
+    { r: 155, g: 210, b: 70 },   // Vert tendre
+    { r: 110, g: 175, b: 45 }    // Vert herbe
+  ],
+  marais: [
+    { r: 115, g: 60, b: 125 },   // Pourpre marais
+    { r: 95, g: 70, b: 60 },     // Brun marron terreux
+    { r: 80, g: 45, b: 90 }      // Violet sombre
+  ],
+  mine: [
+    { r: 50, g: 55, b: 65 },     // Gris charbon
+    { r: 35, g: 38, b: 45 },     // Noir rocheux
+    { r: 75, g: 75, b: 80 }      // Gris foncé
+  ],
+  chateau: [
+    { r: 225, g: 230, b: 235 },  // Blanc pierre
+    { r: 200, g: 205, b: 210 },  // Gris très clair
+    { r: 240, g: 235, b: 225 }   // Beige clair
+  ]
+};
+
 /**
- * Analyse une image de plateau Kingdomino depuis un élément Image/Canvas
- * @param {HTMLImageElement} imgElement
- * @param {number} gridSize - 5 ou 7
- * @returns {Promise<Array<Array<{terrain: string, crowns: number}>>>}
+ * Analyse locale de l'image
  */
 export async function analyzeKingdomImageLocally(imgElement, gridSize = 5) {
   const canvas = document.createElement('canvas');
@@ -21,7 +55,6 @@ export async function analyzeKingdomImageLocally(imgElement, gridSize = 5) {
   canvas.width = size;
   canvas.height = size;
   
-  // Dessiner l'image ajustée au carré
   ctx.drawImage(imgElement, 0, 0, size, size);
   
   const cellSize = size / gridSize;
@@ -29,78 +62,49 @@ export async function analyzeKingdomImageLocally(imgElement, gridSize = 5) {
   
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      // Échantillonner la zone centrale de chaque case (pour éviter les bordures)
-      const startX = c * cellSize + cellSize * 0.2;
-      const startY = r * cellSize + cellSize * 0.2;
-      const sampleW = cellSize * 0.6;
-      const sampleH = cellSize * 0.6;
+      // Échantillonner la zone centrale (50% intérieur de la case pour ignorer les bords)
+      const startX = Math.floor(c * cellSize + cellSize * 0.25);
+      const startY = Math.floor(r * cellSize + cellSize * 0.25);
+      const sampleW = Math.floor(cellSize * 0.5);
+      const sampleH = Math.floor(cellSize * 0.5);
       
       const imgData = ctx.getImageData(startX, startY, sampleW, sampleH);
       const data = imgData.data;
       
       let totalR = 0, totalG = 0, totalB = 0;
       let count = 0;
-      let yellowHighlights = 0; // Pour estimer les couronnes dorées
       
       for (let i = 0; i < data.length; i += 4) {
-        const red = data[i];
-        const green = data[i + 1];
-        const blue = data[i + 2];
-        
-        totalR += red;
-        totalG += green;
-        totalB += blue;
+        totalR += data[i];
+        totalG += data[i + 1];
+        totalB += data[i + 2];
         count++;
-        
-        // Détection de reflets dorés/jaunes très clairs caractéristiques des couronnes
-        if (red > 200 && green > 180 && blue < 120) {
-          yellowHighlights++;
-        }
       }
       
       const avgR = totalR / count;
       const avgG = totalG / count;
       const avgB = totalB / count;
       
-      // Conversion RGB -> HSL
-      const { h, s, l } = rgbToHsl(avgR, avgG, avgB);
+      // Trouver le type de terrain le plus proche par distance minimale
+      let bestTerrain = 'champs';
+      let minDistance = Infinity;
       
-      // Détermination du biome selon la teinte et saturation
-      let terrain = 'champs';
-      let crowns = 0;
-      
-      // Si la luminosité est très faible -> case vide ou mine
-      if (l < 0.22) {
-        terrain = 'mine';
-      } else if (l > 0.85 && s < 0.25) {
-        // Très clair et peu saturé -> Château
-        terrain = 'chateau';
-      } else {
-        // Classification par Teinte (Hue)
-        if (h >= 35 && h <= 65) {
-          terrain = 'champs'; // Jaune blé
-        } else if (h > 65 && h <= 100) {
-          terrain = 'prairie'; // Vert clair
-        } else if (h > 100 && h <= 170) {
-          terrain = 'foret'; // Vert sombre
-        } else if (h > 170 && h <= 260) {
-          terrain = 'eau'; // Bleu lac
-        } else if (h > 260 && h <= 340) {
-          terrain = 'marais'; // Violet / Pourpre
-        } else {
-          terrain = s < 0.2 ? 'mine' : 'champs';
+      for (const [terrainKey, samples] of Object.entries(TERRAINS_PALETTES)) {
+        for (const sample of samples) {
+          // Distance euclidienne pondérée (perceptuelle)
+          const dr = avgR - sample.r;
+          const dg = avgG - sample.g;
+          const db = avgB - sample.b;
+          const dist = (dr * dr * 0.3) + (dg * dg * 0.59) + (db * db * 0.11);
+          
+          if (dist < minDistance) {
+            minDistance = dist;
+            bestTerrain = terrainKey;
+          }
         }
       }
       
-      // Estimation des couronnes
-      const highlightRatio = yellowHighlights / count;
-      if (terrain !== 'chateau' && terrain !== 'empty') {
-        if (highlightRatio > 0.15) crowns = 2;
-        else if (highlightRatio > 0.05) crowns = 1;
-        else crowns = 0;
-      }
-      
-      grid[r][c] = { terrain, crowns };
+      grid[r][c] = { terrain: bestTerrain, crowns: 0 };
     }
   }
   
@@ -108,27 +112,15 @@ export async function analyzeKingdomImageLocally(imgElement, gridSize = 5) {
 }
 
 /**
- * Analyse par IA Vision (via clé API Google Gemini Flash 2.0 / Vision)
- * Permet une reconnaissance 100% exacte en quelques secondes
+ * Analyse par IA Vision Multimodale (Optionnelle)
  */
 export async function analyzeKingdomImageWithAI(base64Image, gridSize = 5, apiKey = '') {
-  if (!apiKey) {
-    throw new Error("Clé API manquante");
-  }
+  if (!apiKey) throw new Error("Clé API manquante");
 
-  const prompt = `Tu es un arbitre expert du jeu de société Kingdomino.
-Analyse cette photo de plateau de jeu Kingdomino (taille ${gridSize}x${gridSize}).
-Identifie pour chaque case de la grille :
-1. Le type de terrain parmi : "champs" (blé jaune), "foret" (vert foncé), "eau" (bleu), "prairie" (vert clair), "marais" (violet/marron), "mine" (gris/noir), "chateau" (le château de départ du joueur), "empty" (si case vide).
-2. Le nombre de couronnes dorées sur la case : 0, 1, 2 ou 3.
-
-Renvoie UNIQUEMENT un objet JSON valide au format suivant sans aucun texte autour :
-{
-  "grid": [
-    [{"terrain": "champs", "crowns": 1}, ...],
-    ...
-  ]
-}`;
+  const prompt = `Tu es un arbitre expert de Kingdomino.
+Analyse cette photo de grille (${gridSize}x${gridSize}).
+Identifie pour chaque case : "champs", "foret", "eau", "prairie", "marais", "mine", "chateau", "empty".
+Renvoie UNIQUEMENT un JSON : { "grid": [[{"terrain": "champs", "crowns": 0}, ...]] }`;
 
   const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 
@@ -139,48 +131,16 @@ Renvoie UNIQUEMENT un objet JSON valide au format suivant sans aucun texte autou
       contents: [{
         parts: [
           { text: prompt },
-          {
-            inline_data: {
-              mime_type: "image/jpeg",
-              data: cleanBase64
-            }
-          }
+          { inline_data: { mime_type: "image/jpeg", data: cleanBase64 } }
         ]
       }],
-      generationConfig: {
-        response_mime_type: "application/json"
-      }
+      generationConfig: { response_mime_type: "application/json" }
     })
   });
 
-  if (!response.ok) {
-    throw new Error(`Erreur API Vision: ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error("Erreur API Vision");
 
   const result = await response.json();
   const textOutput = result.candidates?.[0]?.content?.parts?.[0]?.text;
-  const parsed = JSON.parse(textOutput);
-  
-  return parsed.grid;
-}
-
-function rgbToHsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-
-  if (max === min) {
-    h = s = 0;
-  } else {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
-    }
-    h /= 6;
-  }
-
-  return { h: h * 360, s, l };
+  return JSON.parse(textOutput).grid;
 }
