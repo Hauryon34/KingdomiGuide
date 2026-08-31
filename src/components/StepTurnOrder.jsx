@@ -50,7 +50,7 @@ export default function StepTurnOrder({
   const isFourPlayers = playerCount === 4 && turnOrder.length === 4;
 
   return (
-    <div className="space-y-4 max-w-sm mx-auto px-1 animate-fade-in text-center my-auto">
+    <div className="space-y-4 max-w-sm mx-auto px-1 animate-fade-in text-center">
       {/* Title Section & Reshuffle Button */}
       <div className="flex items-center justify-between px-1">
         <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-bold uppercase tracking-wider border border-amber-500/30">

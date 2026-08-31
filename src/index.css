@@ -3,16 +3,22 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-slate-950 text-slate-100 min-h-screen select-none;
+  html, body, #root {
+    height: 100%;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
   }
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: rgba(15, 23, 42, 0.6);
@@ -23,28 +29,6 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(234, 179, 8, 0.7);
-}
-
-/* Wood & Parchment Medieval textures */
-.bg-parchment {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  color: #451a03;
-}
-
-.bg-parchment-dark {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-}
-
-.border-wood {
-  border-color: #854d0e;
-}
-
-.wood-gradient {
-  background: linear-gradient(180deg, #78350f 0%, #451a03 100%);
-}
-
-.gold-gradient {
-  background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%);
 }
 
 /* Kingdomino Terrain Gradients & Patterns */

@@ -5,43 +5,31 @@
       <stop offset="50%" stopColor="#EAB308" />
       <stop offset="100%" stopColor="#CA8A04" />
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="10" floodColor="#000000" floodOpacity="0.35" />
-    </filter>
   </defs>
   
-  <!-- Fond jaune arrondi style App Icon iOS / Android -->
-  <rect width="512" height="512" rx="115" fill="url(#bg-grad)" />
-  
-  <!-- Bordure intérieure subtile -->
-  <rect x="12" y="12" width="488" height="488" rx="103" fill="none" stroke="#FEF08A" stroke-width="8" opacity="0.6" />
+  <!-- Fond jaune doré arrondi -->
+  <rect width="512" height="512" rx="120" fill="url(#bg-grad)" />
 
-  <!-- Couronne Royale au centre avec ombre portée -->
-  <g filter="url(#shadow)" transform="translate(56, 75)">
-    <!-- Base de la couronne -->
+  <!-- Couronne Royale Pure Noire au centre -->
+  <g transform="translate(56, 80)">
     <path 
-      d="M 40,270 
-         L 70,90 
+      d="M 40,260 
+         L 65,100 
          L 165,190 
-         L 200,50 
+         L 200,60 
          L 235,190 
-         L 330,90 
-         L 360,270 
+         L 335,100 
+         L 360,260 
          Z" 
-      fill="#0F172A" 
-      stroke="#1E293B" 
-      stroke-width="12" 
+      fill="#020617" 
+      stroke="#020617" 
+      stroke-width="16" 
       stroke-linejoin="round"
+      stroke-linecap="round"
     />
-
-    <!-- Perles / Joyaux dorés au sommet de la couronne -->
-    <circle cx="70" cy="85" r="22" fill="#FEF08A" stroke="#0F172A" stroke-width="8" />
-    <circle cx="200" cy="45" r="26" fill="#FEF08A" stroke="#0F172A" stroke-width="8" />
-    <circle cx="330" cy="85" r="22" fill="#FEF08A" stroke="#0F172A" stroke-width="8" />
-
-    <!-- Joyaux incrustés sur la base -->
-    <circle cx="120" cy="245" r="14" fill="#38BDF8" />
-    <circle cx="200" cy="245" r="16" fill="#F43F5E" />
-    <circle cx="280" cy="245" r="14" fill="#4ADE80" />
+    <!-- 3 Perles au sommet -->
+    <circle cx="65" cy="95" r="22" fill="#020617" />
+    <circle cx="200" cy="55" r="26" fill="#020617" />
+    <circle cx="335" cy="95" r="22" fill="#020617" />
   </g>
 </svg>

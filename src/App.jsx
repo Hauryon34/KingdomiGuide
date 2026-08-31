@@ -189,7 +189,7 @@ export default function App() {
             type="button"
             disabled={!isPlayersReady}
             onClick={handleValidatePlayers}
-            className={`flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 transition-all ${
+            className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 transition-all ${
               isPlayersReady
                 ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98]'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
@@ -204,7 +204,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(2)}
-            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             <span>Continuer</span>
             <ArrowRight size={16} />
@@ -215,7 +215,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(3)}
-            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             <span>Scores</span>
             <ArrowRight size={16} />
@@ -226,7 +226,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(4)}
-            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             <span>Podium</span>
             <ArrowRight size={16} />
@@ -237,7 +237,7 @@ export default function App() {
           <button
             type="button"
             onClick={handleImmediateRematch}
-            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             {isDynastyMode ? (
               dynastyRound < 3 ? (
@@ -265,7 +265,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col justify-between antialiased relative overflow-hidden">
+    <div className="fixed inset-0 w-full h-full bg-slate-950 text-slate-100 flex flex-col justify-between overflow-hidden select-none">
       {/* Splash Screen */}
       {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
 
@@ -275,49 +275,49 @@ export default function App() {
         <div className="absolute -bottom-40 right-10 w-[500px] h-[400px] bg-indigo-600/10 rounded-full blur-[130px]"></div>
       </div>
 
-      {/* Responsive Container (Wrapper pour simulation S25 Ultra sur PC) */}
+      {/* Desktop / Mobile Frame Container */}
       <div className={`w-full flex-1 flex flex-col justify-between mx-auto h-full overflow-hidden ${
         isMobileFrame 
           ? 'max-w-[412px] my-auto max-h-[890px] rounded-[40px] border-8 border-slate-800 bg-slate-950 shadow-2xl relative' 
           : 'max-w-md'
       }`}>
-        {/* Header Fixe Aéré */}
-        <header className="shrink-0 w-full px-4 pt-4 pb-2 flex items-center justify-between z-30">
+        {/* Header Fixe en Haut */}
+        <header className="shrink-0 w-full px-4 pt-3.5 pb-2 flex items-center justify-between z-30">
           <div 
             onClick={() => goToStep(0)}
-            className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
           >
             <div className="p-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-md">
-              <Crown size={18} className="fill-slate-950" />
+              <Crown size={17} className="fill-slate-950" />
             </div>
             <div>
-              <span className="font-medieval font-black text-base tracking-wide text-amber-200 block leading-tight">
+              <span className="font-medieval font-black text-sm sm:text-base tracking-wide text-amber-200 block leading-tight">
                 KingdomiGuide
               </span>
-              <span className="text-[9px] text-slate-400 font-medium tracking-wider uppercase block">
+              <span className="text-[8px] text-slate-400 font-medium tracking-wider uppercase block">
                 {isDynastyMode ? `Dynastie (Manche ${dynastyRound}/3)` : 'Compagnon Kingdomino'}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => {
                 playClickSound();
                 setIsSettingsOpen(true);
               }}
-              className="p-2 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-amber-400 hover:bg-slate-800 transition-all shadow-sm"
+              className="p-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-amber-400 hover:bg-slate-800 transition-all shadow-sm"
               title="Paramètres de l'application"
             >
-              <Settings size={16} />
+              <Settings size={15} />
             </button>
           </div>
         </header>
 
-        {/* Main Content Area Défilable avec Contenu Centré et Aéré */}
-        <main className="flex-1 overflow-y-auto overscroll-contain px-3 py-2 flex flex-col justify-start z-10">
-          <div className="w-full my-auto py-1">
+        {/* Zone de Contenu Défilable avec Alignement Haut Amplement Aéré */}
+        <main className="flex-1 overflow-y-auto overscroll-contain px-3 pt-5 pb-5 flex flex-col justify-start z-10">
+          <div className="w-full space-y-3">
             {currentStep === 0 && (
               <StepPlayers
                 selectedMeeples={selectedMeeples}
@@ -387,8 +387,8 @@ export default function App() {
           </div>
         </main>
 
-        {/* Footer Fixe / Sticky Garanti Toujours Visible au Bas de l'Écran */}
-        <footer className="shrink-0 w-full px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent z-30">
+        {/* Footer 100% Fixé au Bas de l'Écran */}
+        <footer className="shrink-0 w-full px-3 pt-2 pb-4 bg-slate-950/95 backdrop-blur-md border-t border-slate-900/90 z-30">
           <div className="flex items-center gap-2.5 max-w-sm mx-auto w-full">
             <BreadcrumbDots
               currentStep={currentStep}

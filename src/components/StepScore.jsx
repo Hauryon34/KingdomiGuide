@@ -554,13 +554,13 @@ export default function StepScore({
                 : 'bg-slate-950/60 border-slate-800'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-200">
+            <div className="flex items-center justify-between gap-1.5">
+              <span className="text-xs font-bold text-slate-200 flex-1 min-w-0 leading-tight">
                 🏰 Empire Milieu
               </span>
-              <span className={`text-[10px] font-black font-mono px-1.5 py-0.2 rounded-full ${
+              <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
                 currentScoreData.middleEmpireScore > 0 
-                  ? 'bg-amber-400 text-slate-950' 
+                  ? 'bg-amber-400 text-slate-950 shadow-sm' 
                   : 'bg-slate-800 text-slate-500'
               }`}>
                 {currentScoreData.middleEmpireScore > 0 ? '+10 pts' : '0 pt'}
@@ -584,13 +584,13 @@ export default function StepScore({
                 : 'bg-slate-950/60 border-slate-800'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-200">
+            <div className="flex items-center justify-between gap-1.5">
+              <span className="text-xs font-bold text-slate-200 flex-1 min-w-0 leading-tight">
                 ✨ Harmonie
               </span>
-              <span className={`text-[10px] font-black font-mono px-1.5 py-0.2 rounded-full ${
+              <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
                 currentScoreData.harmonyScore > 0 
-                  ? 'bg-emerald-400 text-slate-950' 
+                  ? 'bg-emerald-400 text-slate-950 shadow-sm' 
                   : 'bg-slate-800 text-slate-500'
               }`}>
                 {currentScoreData.harmonyScore > 0 ? '+5 pts' : '0 pt'}
