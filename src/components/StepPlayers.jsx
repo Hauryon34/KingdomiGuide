@@ -1,6 +1,7 @@
 import React from 'react';
 import { MEEPLES } from '../types/kingdomino';
 import MeepleIcon from './MeepleIcon';
+import { playClickSound, triggerHaptic } from '../utils/audioHaptics';
 
 export default function StepPlayers({
   selectedMeeples,
@@ -9,6 +10,8 @@ export default function StepPlayers({
   setPlayerNames
 }) {
   const handleToggle = (meepleId) => {
+    playClickSound();
+    triggerHaptic(20);
     if (selectedMeeples.includes(meepleId)) {
       setSelectedMeeples(selectedMeeples.filter(id => id !== meepleId));
     } else {
@@ -17,10 +20,10 @@ export default function StepPlayers({
   };
 
   return (
-    <div className="space-y-3.5 max-w-sm mx-auto px-1 animate-fade-in text-center">
+    <div className="space-y-3 max-w-sm mx-auto px-1 animate-fade-in text-center">
       {/* Title Section */}
-      <div className="space-y-1">
-        <h2 className="text-xl sm:text-2xl font-black font-medieval text-amber-200">
+      <div className="space-y-0.5">
+        <h2 className="text-xl font-black font-medieval text-amber-200">
           Qui participe ?
         </h2>
         <p className="text-[11px] text-slate-400">
@@ -28,7 +31,7 @@ export default function StepPlayers({
         </p>
       </div>
 
-      {/* 2 Colonnes x 2 Lignes de Figurines compactes et élégantes */}
+      {/* 2 Colonnes x 2 Lignes de Figurines */}
       <div className="grid grid-cols-2 gap-2.5">
         {MEEPLES.map((meeple) => {
           const isSelected = selectedMeeples.includes(meeple.id);
@@ -57,9 +60,9 @@ export default function StepPlayers({
         })}
       </div>
 
-      {/* Champs de prénoms dynamiques compacts sous l'intitulé "Participants :" */}
+      {/* Champs de prénoms dynamiques sous l'intitulé "Participants :" */}
       {selectedMeeples.length > 0 && (
-        <div className="space-y-1.5 pt-1 animate-fade-in text-left">
+        <div className="space-y-1.5 pt-0.5 animate-fade-in text-left">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
             Participants ({selectedMeeples.length}) :
           </p>
@@ -75,6 +78,7 @@ export default function StepPlayers({
                   <div className="flex-1">
                     <input
                       type="text"
+                      enterKeyHint="done"
                       value={playerNames[meepleId] || ''}
                       placeholder={`Joueur ${idx + 1} (${meeple.label})`}
                       onChange={(e) => {

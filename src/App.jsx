@@ -5,7 +5,7 @@ import StepTurnOrder from './components/StepTurnOrder';
 import StepScore from './components/StepScore';
 import StepPodium from './components/StepPodium';
 import BreadcrumbDots from './components/BreadcrumbDots';
-import { createEmptyGrid } from './utils/scoreCalculator';
+import { createEmptyGrid, calculateKingdomScore } from './utils/scoreCalculator';
 import { 
   Crown, 
   Smartphone, 
@@ -19,7 +19,13 @@ import {
   X,
   Vibrate
 } from 'lucide-react';
-import { toggleSound, isSoundEnabled, playClickSound, triggerHaptic } from './utils/audioHaptics';
+import { 
+  toggleSound, 
+  toggleHaptic,
+  playClickSound, 
+  playToggleSound, 
+  triggerHaptic 
+} from './utils/audioHaptics';
 
 export default function App() {
   // Funnel Step: 0 (Players) -> 1 (Mode) -> 2 (TurnOrder) -> 3 (Score) -> 4 (Podium)
@@ -31,7 +37,11 @@ export default function App() {
   const [playerNames, setPlayerNames] = useState({});
   const [gameMode, setGameMode] = useState('duel'); // 'duel' (7x7) or 'classic' (5x5)
   const [gridSize, setGridSize] = useState(7);
+  
+  // Dynasty Tournament State
   const [isDynastyMode, setIsDynastyMode] = useState(false);
+  const [dynastyRound, setDynastyRound] = useState(1);
+  const [dynastyHistory, setDynastyHistory] = useState([]);
 
   // Persisted Turn Order
   const [turnOrder, setTurnOrder] = useState([]);
@@ -67,13 +77,15 @@ export default function App() {
     const nextState = !soundOn;
     setSoundOn(nextState);
     toggleSound(nextState);
-    if (nextState) playClickSound();
+    playToggleSound(nextState);
   };
 
   const handleToggleHaptic = () => {
     const nextState = !hapticOn;
     setHapticOn(nextState);
-    if (nextState) triggerHaptic(25);
+    toggleHaptic(nextState);
+    playToggleSound(nextState);
+    if (nextState) triggerHaptic(30);
   };
 
   const handleSetSelectedMeeples = (newMeeples) => {
@@ -101,13 +113,62 @@ export default function App() {
     setPlayerNames({});
     setPlayerGrids({});
     setTurnOrder([]);
+    setDynastyRound(1);
+    setDynastyHistory([]);
     setCurrentStep(0);
     setMaxUnlockedStep(0);
     setIsSettingsOpen(false);
   };
 
+  // Revanche Immédiate ou Manche Suivante en Dynastie
   const handleImmediateRematch = () => {
     playClickSound();
+
+    if (isDynastyMode) {
+      if (dynastyRound < 3) {
+        // Enregistrer les scores de la manche courante
+        const roundScores = {};
+        selectedMeeples.forEach(id => {
+          const grid = playerGrids[id] || createEmptyGrid(gridSize);
+          const scoreData = calculateKingdomScore(grid, {
+            middleEmpireBonus: bonuses.middleEmpire,
+            harmonyBonus: bonuses.harmony
+          });
+          roundScores[id] = scoreData.totalScore;
+        });
+
+        setDynastyHistory([
+          ...dynastyHistory,
+          { round: dynastyRound, scores: roundScores }
+        ]);
+        setDynastyRound(dynastyRound + 1);
+
+        const emptyGrids = {};
+        selectedMeeples.forEach(id => {
+          emptyGrids[id] = createEmptyGrid(gridSize);
+        });
+        setPlayerGrids(emptyGrids);
+        setTurnOrder([]);
+        setCurrentStep(2);
+        setMaxUnlockedStep(2);
+        return;
+      } else {
+        // Fin des 3 manches : recommencer une nouvelle dynastie
+        setDynastyRound(1);
+        setDynastyHistory([]);
+        const emptyGrids = {};
+        selectedMeeples.forEach(id => {
+          emptyGrids[id] = createEmptyGrid(gridSize);
+        });
+        setPlayerGrids(emptyGrids);
+        setTurnOrder([]);
+        setCurrentStep(2);
+        setMaxUnlockedStep(2);
+        return;
+      }
+    }
+
+    // Mode Normal : Revanche simple
     const emptyGrids = {};
     selectedMeeples.forEach(id => {
       emptyGrids[id] = createEmptyGrid(gridSize);
@@ -178,8 +239,24 @@ export default function App() {
             onClick={handleImmediateRematch}
             className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
-            <Swords size={15} />
-            <span>Revanche ⚔️</span>
+            {isDynastyMode ? (
+              dynastyRound < 3 ? (
+                <>
+                  <Swords size={15} />
+                  <span>Manche {dynastyRound + 1}/3 ⚔️</span>
+                </>
+              ) : (
+                <>
+                  <Crown size={15} />
+                  <span>Nouvelle Dynastie 👑</span>
+                </>
+              )
+            ) : (
+              <>
+                <Swords size={15} />
+                <span>Revanche ⚔️</span>
+              </>
+            )}
           </button>
         );
       default:
@@ -188,7 +265,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between antialiased relative">
+    <div className="min-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col justify-between antialiased relative">
       {/* Background ambient lighting */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-500/10 rounded-full blur-[130px]"></div>
@@ -196,12 +273,12 @@ export default function App() {
       </div>
 
       {/* Clean Mobile-First Header */}
-      <header className="w-full max-w-md mx-auto px-4 pt-2 pb-0.5 flex items-center justify-between z-30">
+      <header className="w-full max-w-md mx-auto px-4 pt-2.5 pb-0.5 flex items-center justify-between z-30">
         <div 
           onClick={() => goToStep(0)}
           className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
         >
-          <div className="p-1 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-md">
+          <div className="p-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-md">
             <Crown size={16} className="fill-slate-950" />
           </div>
           <div>
@@ -209,7 +286,7 @@ export default function App() {
               KingdomiGuide
             </span>
             <span className="text-[8px] text-slate-400 font-medium tracking-wider uppercase block">
-              Compagnon Kingdomino
+              {isDynastyMode ? `Dynastie (Manche ${dynastyRound}/3)` : 'Compagnon Kingdomino'}
             </span>
           </div>
         </div>
@@ -296,6 +373,11 @@ export default function App() {
                 playerNames={playerNames}
                 playerGrids={playerGrids}
                 bonuses={bonuses}
+                isDynastyMode={isDynastyMode}
+                dynastyRound={dynastyRound}
+                dynastyHistory={dynastyHistory}
+                onNextRound={handleImmediateRematch}
+                onResetGame={handleResetGame}
               />
             )}
           </div>
@@ -328,7 +410,10 @@ export default function App() {
               </div>
               <button
                 type="button"
-                onClick={() => setIsSettingsOpen(false)}
+                onClick={() => {
+                  playClickSound();
+                  setIsSettingsOpen(false);
+                }}
                 className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
               >
                 <X size={16} />
@@ -394,7 +479,10 @@ export default function App() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsMobileFrame(!isMobileFrame)}
+                  onClick={() => {
+                    playClickSound();
+                    setIsMobileFrame(!isMobileFrame);
+                  }}
                   className="px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-200 hover:bg-slate-700"
                 >
                   {isMobileFrame ? 'Plein écran' : 'Vue Mobile'}

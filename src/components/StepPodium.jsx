@@ -1,17 +1,25 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Trophy, Crown } from 'lucide-react';
+import { Trophy, Crown, Swords, RotateCcw } from 'lucide-react';
 import MeepleIcon from './MeepleIcon';
 import { MEEPLES } from '../types/kingdomino';
 import { calculateKingdomScore, comparePlayers, computeGameHonors } from '../utils/scoreCalculator';
-import { playFanfareSound } from '../utils/audioHaptics';
+import { playFanfareSound, playClickSound } from '../utils/audioHaptics';
 
 export default function StepPodium({
   selectedMeeples,
   playerNames,
   playerGrids,
-  bonuses
+  bonuses,
+  isDynastyMode,
+  dynastyRound = 1,
+  dynastyHistory = [],
+  onNextRound,
+  onResetGame
 }) {
+  const isDynastyFinished = isDynastyMode && dynastyRound >= 3;
+
+  const currentRoundScores = {};
   const activePlayers = selectedMeeples.map((meepleId, index) => {
     const meeple = MEEPLES.find(m => m.id === meepleId) || MEEPLES[index];
     const grid = playerGrids[meepleId];
@@ -20,14 +28,30 @@ export default function StepPodium({
       harmonyBonus: bonuses.harmony
     });
 
+    currentRoundScores[meepleId] = scoreData.totalScore;
+
+    // Calcul cumulé si Dynasty
+    let cumulativeScore = scoreData.totalScore;
+    dynastyHistory.forEach(h => {
+      cumulativeScore += (h.scores[meepleId] || 0);
+    });
+
     return {
       ...meeple,
       name: playerNames[meepleId] || meeple.label || `Joueur ${index + 1}`,
-      scoreData
+      scoreData,
+      cumulativeScore
     };
   });
 
-  const rankedPlayers = [...activePlayers].sort(comparePlayers);
+  // Tri par score de la manche (ou cumulé si fin de dynastie)
+  const rankedPlayers = [...activePlayers].sort((a, b) => {
+    if (isDynastyFinished) {
+      return b.cumulativeScore - a.cumulativeScore;
+    }
+    return comparePlayers(a, b);
+  });
+
   const winner = rankedPlayers[0];
   const second = rankedPlayers[1];
   const third = rankedPlayers[2];
@@ -72,18 +96,17 @@ export default function StepPodium({
           <Trophy size={26} />
         </div>
         <h2 className="text-xl sm:text-2xl font-black font-medieval text-amber-200">
-          Victoire Royale !
+          {isDynastyFinished ? 'Couronnement Impérial !' : (isDynastyMode ? `Manche ${dynastyRound} sur 3` : 'Victoire Royale !')}
         </h2>
         <p className="text-xs text-slate-300">
-          <strong className="text-amber-300 font-bold">{winner?.name}</strong> remporte la partie !
+          <strong className="text-amber-300 font-bold">{winner?.name}</strong> {isDynastyFinished ? 'remporte la Dynastie !' : 'remporte la manche !'}
         </p>
       </div>
 
-      {/* Olympic-style 3D Visual Podium (Marches fixes et immuables) */}
+      {/* Olympic-style 3D Visual Podium */}
       <div className="pt-1 pb-0.5">
-        {/* Ligne des 3 Marches strictement alignées par le bas */}
         <div className="flex items-end justify-center gap-2 sm:gap-2.5 px-1">
-          {/* Marche #2 (Argent) - Gauche */}
+          {/* Marche #2 (Argent) */}
           {second && (
             <div className="flex-1 flex flex-col items-center">
               <div className="relative mb-1.5 flex flex-col items-center">
@@ -97,17 +120,16 @@ export default function StepPodium({
                 </div>
               </div>
 
-              {/* Marche Argent */}
               <div className="w-full h-24 rounded-t-2xl bg-gradient-to-b from-slate-300 via-slate-400 to-slate-500 border-2 border-slate-200 shadow-xl flex flex-col items-center justify-center p-1.5 text-slate-950 flex-shrink-0">
                 <span className="text-xl font-black font-medieval block leading-none">#2</span>
                 <div className="text-xs font-extrabold font-mono mt-0.5">
-                  {second.scoreData.totalScore} {second.scoreData.totalScore > 1 ? 'pts' : 'pt'}
+                  {isDynastyFinished ? second.cumulativeScore : second.scoreData.totalScore} pts
                 </div>
               </div>
             </div>
           )}
 
-          {/* Marche #1 (Or) - Centre */}
+          {/* Marche #1 (Or) */}
           {winner && (
             <div className="flex-1 flex flex-col items-center">
               <div className="relative mb-1.5 flex flex-col items-center scale-105">
@@ -123,17 +145,16 @@ export default function StepPodium({
                 </div>
               </div>
 
-              {/* Marche Or */}
               <div className="w-full h-32 rounded-t-2xl bg-gradient-to-b from-yellow-300 via-amber-400 to-amber-500 border-2 border-yellow-200 shadow-2xl flex flex-col items-center justify-center p-1.5 text-slate-950 flex-shrink-0">
                 <span className="text-2xl font-black font-medieval block leading-none">#1</span>
                 <div className="text-sm font-black font-mono mt-0.5">
-                  {winner.scoreData.totalScore} {winner.scoreData.totalScore > 1 ? 'pts' : 'pt'}
+                  {isDynastyFinished ? winner.cumulativeScore : winner.scoreData.totalScore} pts
                 </div>
               </div>
             </div>
           )}
 
-          {/* Marche #3 (Bronze) - Droite */}
+          {/* Marche #3 (Bronze) */}
           {third && (
             <div className="flex-1 flex flex-col items-center">
               <div className="relative mb-1.5 flex flex-col items-center">
@@ -147,21 +168,19 @@ export default function StepPodium({
                 </div>
               </div>
 
-              {/* Marche Bronze */}
               <div className="w-full h-18 rounded-t-2xl bg-gradient-to-b from-amber-700 via-amber-800 to-amber-900 border-2 border-amber-600 shadow-lg flex flex-col items-center justify-center p-1.5 text-amber-100 flex-shrink-0">
                 <span className="text-lg font-black font-medieval block leading-none">#3</span>
                 <div className="text-[11px] font-bold font-mono mt-0.5">
-                  {third.scoreData.totalScore} {third.scoreData.totalScore > 1 ? 'pts' : 'pt'}
+                  {isDynastyFinished ? third.cumulativeScore : third.scoreData.totalScore} pts
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Ligne des Titres honorifiques placée PROPREMENT sous la ligne du podium */}
+        {/* Ligne des Titres honorifiques */}
         {hasAnyHonors && (
           <div className="grid grid-cols-3 gap-1.5 sm:gap-2 px-1 pt-2">
-            {/* Titres du 2ème joueur */}
             <div className="flex flex-col items-center gap-1">
               {second && honorsMap[second.id]?.map((h, i) => (
                 <div key={i} className="w-full text-[8.5px] font-black bg-slate-900/90 text-amber-300 px-1 py-0.5 rounded-lg border border-slate-800 shadow-sm truncate" title={h.desc}>
@@ -170,7 +189,6 @@ export default function StepPodium({
               ))}
             </div>
 
-            {/* Titres du Vainqueur */}
             <div className="flex flex-col items-center gap-1">
               {winner && honorsMap[winner.id]?.map((h, i) => (
                 <div key={i} className="w-full text-[8.5px] font-black bg-amber-500/15 text-amber-200 px-1 py-0.5 rounded-lg border border-amber-500/30 shadow-sm truncate" title={h.desc}>
@@ -179,7 +197,6 @@ export default function StepPodium({
               ))}
             </div>
 
-            {/* Titres du 3ème joueur */}
             <div className="flex flex-col items-center gap-1">
               {third && honorsMap[third.id]?.map((h, i) => (
                 <div key={i} className="w-full text-[8.5px] font-black bg-slate-900/90 text-amber-300 px-1 py-0.5 rounded-lg border border-slate-800 shadow-sm truncate" title={h.desc}>
@@ -191,10 +208,9 @@ export default function StepPodium({
         )}
       </div>
 
-      {/* 4ème Joueur en retrait (Titres dans la continuité inférieure de sa carte) */}
+      {/* 4ème Joueur en retrait */}
       {fourth && (
         <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 text-left shadow-sm">
-          {/* Ligne principale du 4ème */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-5 h-5 rounded-md bg-slate-800 text-slate-400 font-bold text-[10px] flex items-center justify-center flex-shrink-0">
@@ -212,12 +228,11 @@ export default function StepPodium({
                 <span>{fourth.scoreData.totalCrowns}</span>
               </div>
               <span className="text-xs font-black font-mono text-slate-300">
-                {fourth.scoreData.totalScore} {fourth.scoreData.totalScore > 1 ? 'pts' : 'pt'}
+                {isDynastyFinished ? fourth.cumulativeScore : fourth.scoreData.totalScore} pts
               </span>
             </div>
           </div>
 
-          {/* Titres dans la continuité inférieure de la carte */}
           {honorsMap[fourth.id]?.length > 0 && (
             <div className="pt-1.5 border-t border-slate-800/80 flex items-center gap-1 flex-wrap">
               {honorsMap[fourth.id].map((h, i) => (
@@ -228,6 +243,38 @@ export default function StepPodium({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tableau récapitulatif du Tournoi Dynastie (3 manches) */}
+      {isDynastyMode && (
+        <div className="bg-slate-900/90 rounded-2xl p-3 border border-indigo-500/30 text-left space-y-2 shadow-md">
+          <div className="flex items-center justify-between text-xs font-bold text-indigo-300 uppercase tracking-wide">
+            <span>👑 Tournoi Dynastie (Manche {dynastyRound}/3)</span>
+          </div>
+
+          <div className="space-y-1 text-xs">
+            {rankedPlayers.map((p) => {
+              const r1 = dynastyHistory[0]?.scores[p.id] ?? (dynastyRound === 1 ? p.scoreData.totalScore : '-');
+              const r2 = dynastyHistory[1]?.scores[p.id] ?? (dynastyRound === 2 ? p.scoreData.totalScore : '-');
+              const r3 = dynastyHistory[2]?.scores[p.id] ?? (dynastyRound === 3 ? p.scoreData.totalScore : '-');
+
+              return (
+                <div key={p.id} className="flex items-center justify-between p-1.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <MeepleIcon color={p.color} size={18} showCrown={false} />
+                    <span className="font-bold text-slate-200">{p.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
+                    <span>M1: <strong className="text-slate-200">{r1}</strong></span>
+                    <span>M2: <strong className="text-slate-200">{r2}</strong></span>
+                    <span>M3: <strong className="text-slate-200">{r3}</strong></span>
+                    <span className="text-amber-300 font-bold ml-1">= {p.cumulativeScore} pts</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

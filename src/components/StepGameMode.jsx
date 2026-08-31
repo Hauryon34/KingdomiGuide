@@ -1,7 +1,7 @@
 import React from 'react';
 import { GAME_SETUP_RULES } from '../types/kingdomino';
-import { Layers, Sparkles, Target, Compass, Crown, Trophy, Swords } from 'lucide-react';
-import { playClickSound } from '../utils/audioHaptics';
+import { Layers, Sparkles, Target, Compass, Trophy } from 'lucide-react';
+import { playClickSound, playToggleSound } from '../utils/audioHaptics';
 
 export default function StepGameMode({
   playerCount,
@@ -16,10 +16,10 @@ export default function StepGameMode({
   const currentSetup = GAME_SETUP_RULES[playerCount]?.[isTwoPlayers ? gameMode : 'classic'];
 
   return (
-    <div className="space-y-4 max-w-sm sm:max-w-md mx-auto px-1 animate-fade-in">
+    <div className="space-y-3.5 max-w-sm sm:max-w-md mx-auto px-1 animate-fade-in">
       {/* Title Section */}
-      <div className="text-center space-y-1">
-        <h2 className="text-xl sm:text-2xl font-black font-medieval text-amber-200">
+      <div className="text-center space-y-0.5">
+        <h2 className="text-xl font-black font-medieval text-amber-200">
           Mode de Jeu & Variantes
         </h2>
         <p className="text-[11px] text-slate-400">
@@ -96,8 +96,9 @@ export default function StepGameMode({
           <button
             type="button"
             onClick={() => {
-              playClickSound();
-              setBonuses({ ...bonuses, middleEmpire: !bonuses.middleEmpire });
+              const nextVal = !bonuses.middleEmpire;
+              playToggleSound(nextVal);
+              setBonuses({ ...bonuses, middleEmpire: nextVal });
             }}
             className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between gap-2 transition-all ${
               bonuses.middleEmpire
@@ -125,8 +126,9 @@ export default function StepGameMode({
           <button
             type="button"
             onClick={() => {
-              playClickSound();
-              setBonuses({ ...bonuses, harmony: !bonuses.harmony });
+              const nextVal = !bonuses.harmony;
+              playToggleSound(nextVal);
+              setBonuses({ ...bonuses, harmony: nextVal });
             }}
             className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between gap-2 transition-all ${
               bonuses.harmony
@@ -154,8 +156,9 @@ export default function StepGameMode({
           <button
             type="button"
             onClick={() => {
-              playClickSound();
-              if (setIsDynastyMode) setIsDynastyMode(!isDynastyMode);
+              const nextVal = !isDynastyMode;
+              playToggleSound(nextVal);
+              if (setIsDynastyMode) setIsDynastyMode(nextVal);
             }}
             className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between gap-2 transition-all ${
               isDynastyMode
@@ -182,23 +185,23 @@ export default function StepGameMode({
       </div>
 
       {/* Mini-Guide Synthétique Aéré avec Mode Dynastie expliqué */}
-      <div className="bg-slate-900/90 rounded-2xl p-3.5 border border-slate-800 shadow-md space-y-2.5">
+      <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200 uppercase tracking-wider">
           <Compass size={14} className="text-amber-400" />
           <span>Guide Express de la Manche</span>
         </div>
 
-        <div className="space-y-2 text-xs text-slate-300">
+        <div className="space-y-1.5 text-xs text-slate-300">
           {/* Explication du Mode Dynastie si actif */}
           {isDynastyMode && (
             <div className="flex items-start gap-2 bg-indigo-950/70 p-2.5 rounded-xl border border-indigo-800/80 animate-fade-in">
               <div className="p-1 rounded-lg bg-indigo-500/20 text-indigo-300 flex-shrink-0">
-                <Trophy size={15} />
+                <Trophy size={14} />
               </div>
               <div>
                 <div className="font-bold text-indigo-200 text-[11px]">Règle de la Dynastie</div>
                 <div className="text-indigo-300/90 text-[10px] leading-relaxed">
-                  Jouez 3 manches à la suite. Utilisez le bouton <em>« Revanche ⚔️ »</em> après chaque manche pour conserver les joueurs : le champion final est celui qui cumule le plus grand total de points après les 3 manches !
+                  Jouez 3 manches à la suite. Utilisez le bouton <em>« Manche Suivante ⚔️ »</em> après chaque manche : le score cumulé détermine le Grand Empereur final !
                 </div>
               </div>
             </div>
@@ -206,7 +209,7 @@ export default function StepGameMode({
 
           <div className="flex items-start gap-2 bg-slate-950/70 p-2 rounded-xl border border-slate-800/80">
             <div className="p-1 rounded-lg bg-amber-500/20 text-amber-400 flex-shrink-0">
-              <Layers size={15} />
+              <Layers size={14} />
             </div>
             <div>
               <div className="font-bold text-slate-100 text-[11px]">Pioche</div>
@@ -216,7 +219,7 @@ export default function StepGameMode({
 
           <div className="flex items-start gap-2 bg-slate-950/70 p-2 rounded-xl border border-slate-800/80">
             <div className="p-1 rounded-lg bg-indigo-500/20 text-indigo-400 flex-shrink-0">
-              <Sparkles size={15} />
+              <Sparkles size={14} />
             </div>
             <div>
               <div className="font-bold text-slate-100 text-[11px]">Meeples & Actions</div>
@@ -228,7 +231,7 @@ export default function StepGameMode({
 
           <div className="flex items-start gap-2 bg-slate-950/70 p-2 rounded-xl border border-slate-800/80">
             <div className="p-1 rounded-lg bg-emerald-500/20 text-emerald-400 flex-shrink-0">
-              <Target size={15} />
+              <Target size={14} />
             </div>
             <div>
               <div className="font-bold text-slate-100 text-[11px]">Connexion légale</div>
