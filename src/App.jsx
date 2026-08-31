@@ -5,6 +5,7 @@ import StepTurnOrder from './components/StepTurnOrder';
 import StepScore from './components/StepScore';
 import StepPodium from './components/StepPodium';
 import BreadcrumbDots from './components/BreadcrumbDots';
+import SplashScreen from './components/SplashScreen';
 import { createEmptyGrid, calculateKingdomScore } from './utils/scoreCalculator';
 import { 
   Crown, 
@@ -28,6 +29,9 @@ import {
 } from './utils/audioHaptics';
 
 export default function App() {
+  // Splash Screen State
+  const [showSplash, setShowSplash] = useState(true);
+
   // Funnel Step: 0 (Players) -> 1 (Mode) -> 2 (TurnOrder) -> 3 (Score) -> 4 (Podium)
   const [currentStep, setCurrentStep] = useState(0);
   const [maxUnlockedStep, setMaxUnlockedStep] = useState(0);
@@ -62,7 +66,7 @@ export default function App() {
   // Settings Menu Modal
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Desktop Simulator Toggle
+  // Desktop Simulator Toggle (Calibré S25 Ultra 19.5:9)
   const [isMobileFrame, setIsMobileFrame] = useState(false);
 
   const goToStep = (step) => {
@@ -120,13 +124,11 @@ export default function App() {
     setIsSettingsOpen(false);
   };
 
-  // Revanche Immédiate ou Manche Suivante en Dynastie
   const handleImmediateRematch = () => {
     playClickSound();
 
     if (isDynastyMode) {
       if (dynastyRound < 3) {
-        // Enregistrer les scores de la manche courante
         const roundScores = {};
         selectedMeeples.forEach(id => {
           const grid = playerGrids[id] || createEmptyGrid(gridSize);
@@ -153,7 +155,6 @@ export default function App() {
         setMaxUnlockedStep(2);
         return;
       } else {
-        // Fin des 3 manches : recommencer une nouvelle dynastie
         setDynastyRound(1);
         setDynastyHistory([]);
         const emptyGrids = {};
@@ -168,7 +169,6 @@ export default function App() {
       }
     }
 
-    // Mode Normal : Revanche simple
     const emptyGrids = {};
     selectedMeeples.forEach(id => {
       emptyGrids[id] = createEmptyGrid(gridSize);
@@ -189,7 +189,7 @@ export default function App() {
             type="button"
             disabled={!isPlayersReady}
             onClick={handleValidatePlayers}
-            className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 transition-all ${
+            className={`flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 transition-all ${
               isPlayersReady
                 ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98]'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
@@ -204,7 +204,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(2)}
-            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             <span>Continuer</span>
             <ArrowRight size={16} />
@@ -215,7 +215,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(3)}
-            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             <span>Scores</span>
             <ArrowRight size={16} />
@@ -226,7 +226,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => goToStep(4)}
-            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             <span>Podium</span>
             <ArrowRight size={16} />
@@ -237,23 +237,23 @@ export default function App() {
           <button
             type="button"
             onClick={handleImmediateRematch}
-            className="flex-1 py-3 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:scale-[1.01] active:scale-[0.98] transition-all"
           >
             {isDynastyMode ? (
               dynastyRound < 3 ? (
                 <>
-                  <Swords size={15} />
+                  <Swords size={16} />
                   <span>Manche {dynastyRound + 1}/3 ⚔️</span>
                 </>
               ) : (
                 <>
-                  <Crown size={15} />
+                  <Crown size={16} />
                   <span>Nouvelle Dynastie 👑</span>
                 </>
               )
             ) : (
               <>
-                <Swords size={15} />
+                <Swords size={16} />
                 <span>Revanche ⚔️</span>
               </>
             )}
@@ -265,55 +265,59 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col justify-between antialiased relative">
+    <div className="h-[100dvh] max-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col justify-between antialiased relative overflow-hidden">
+      {/* Splash Screen */}
+      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+
       {/* Background ambient lighting */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-500/10 rounded-full blur-[130px]"></div>
         <div className="absolute -bottom-40 right-10 w-[500px] h-[400px] bg-indigo-600/10 rounded-full blur-[130px]"></div>
       </div>
 
-      {/* Clean Mobile-First Header */}
-      <header className="w-full max-w-md mx-auto px-4 pt-2.5 pb-0.5 flex items-center justify-between z-30">
-        <div 
-          onClick={() => goToStep(0)}
-          className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
-        >
-          <div className="p-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-md">
-            <Crown size={16} className="fill-slate-950" />
-          </div>
-          <div>
-            <span className="font-medieval font-black text-sm tracking-wide text-amber-200 block leading-tight">
-              KingdomiGuide
-            </span>
-            <span className="text-[8px] text-slate-400 font-medium tracking-wider uppercase block">
-              {isDynastyMode ? `Dynastie (Manche ${dynastyRound}/3)` : 'Compagnon Kingdomino'}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {/* Settings Menu Button */}
-          <button
-            type="button"
-            onClick={() => {
-              playClickSound();
-              setIsSettingsOpen(true);
-            }}
-            className="p-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-amber-400 hover:bg-slate-800 transition-all shadow-sm"
-            title="Paramètres de l'application"
-          >
-            <Settings size={15} />
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className={`w-full flex-1 flex flex-col justify-between mx-auto py-1 px-3 z-10 ${
-        isMobileFrame ? 'max-w-md my-2 rounded-3xl border-4 border-slate-800 bg-slate-950 shadow-2xl overflow-hidden min-h-[750px]' : 'max-w-md'
+      {/* Responsive Container (Wrapper pour simulation S25 Ultra sur PC) */}
+      <div className={`w-full flex-1 flex flex-col justify-between mx-auto h-full overflow-hidden ${
+        isMobileFrame 
+          ? 'max-w-[412px] my-auto max-h-[890px] rounded-[40px] border-8 border-slate-800 bg-slate-950 shadow-2xl relative' 
+          : 'max-w-md'
       }`}>
-        <div className="w-full flex-1 flex flex-col justify-between space-y-2">
-          {/* Écrans du Tunnel UX */}
-          <div className="w-full space-y-2 flex-1">
+        {/* Header Fixe Aéré */}
+        <header className="shrink-0 w-full px-4 pt-4 pb-2 flex items-center justify-between z-30">
+          <div 
+            onClick={() => goToStep(0)}
+            className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
+          >
+            <div className="p-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 shadow-md">
+              <Crown size={18} className="fill-slate-950" />
+            </div>
+            <div>
+              <span className="font-medieval font-black text-base tracking-wide text-amber-200 block leading-tight">
+                KingdomiGuide
+              </span>
+              <span className="text-[9px] text-slate-400 font-medium tracking-wider uppercase block">
+                {isDynastyMode ? `Dynastie (Manche ${dynastyRound}/3)` : 'Compagnon Kingdomino'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                playClickSound();
+                setIsSettingsOpen(true);
+              }}
+              className="p-2 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-amber-400 hover:bg-slate-800 transition-all shadow-sm"
+              title="Paramètres de l'application"
+            >
+              <Settings size={16} />
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content Area Défilable avec Contenu Centré et Aéré */}
+        <main className="flex-1 overflow-y-auto overscroll-contain px-3 py-2 flex flex-col justify-start z-10">
+          <div className="w-full my-auto py-1">
             {currentStep === 0 && (
               <StepPlayers
                 selectedMeeples={selectedMeeples}
@@ -381,21 +385,21 @@ export default function App() {
               />
             )}
           </div>
+        </main>
 
-          {/* Bottom Row: Fil d'Ariane & Bouton d'action sur la MÊME LIGNE */}
-          <div className="mt-auto pt-2 pb-2.5 max-w-sm mx-auto w-full">
-            <div className="flex items-center gap-2.5 w-full">
-              <BreadcrumbDots
-                currentStep={currentStep}
-                setStep={goToStep}
-                maxUnlockedStep={maxUnlockedStep}
-              />
+        {/* Footer Fixe / Sticky Garanti Toujours Visible au Bas de l'Écran */}
+        <footer className="shrink-0 w-full px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent z-30">
+          <div className="flex items-center gap-2.5 max-w-sm mx-auto w-full">
+            <BreadcrumbDots
+              currentStep={currentStep}
+              setStep={goToStep}
+              maxUnlockedStep={maxUnlockedStep}
+            />
 
-              {renderActionButton()}
-            </div>
+            {renderActionButton()}
           </div>
-        </div>
-      </main>
+        </footer>
+      </div>
 
       {/* Settings Menu Modal */}
       {isSettingsOpen && (
@@ -410,17 +414,13 @@ export default function App() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  playClickSound();
-                  setIsSettingsOpen(false);
-                }}
+                onClick={() => setIsSettingsOpen(false)}
                 className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
               >
                 <X size={16} />
               </button>
             </div>
 
-            {/* Options List */}
             <div className="space-y-2.5">
               {/* Son */}
               <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
@@ -473,8 +473,8 @@ export default function App() {
                     {isMobileFrame ? <Monitor size={16} /> : <Smartphone size={16} />}
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-100 block">Affichage Écran</span>
-                    <span className="text-[10px] text-slate-400 block">Cadre smartphone ou plein écran</span>
+                    <span className="text-xs font-bold text-slate-100 block">Simulateur S25 Ultra</span>
+                    <span className="text-[10px] text-slate-400 block">Cadre smartphone 19.5:9 sur PC</span>
                   </div>
                 </div>
                 <button
@@ -485,7 +485,7 @@ export default function App() {
                   }}
                   className="px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-200 hover:bg-slate-700"
                 >
-                  {isMobileFrame ? 'Plein écran' : 'Vue Mobile'}
+                  {isMobileFrame ? 'Plein écran' : 'Vue S25 Ultra'}
                 </button>
               </div>
 
