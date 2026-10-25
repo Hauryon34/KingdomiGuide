@@ -9,7 +9,6 @@ import TerrainIcon from './TerrainIcon';
 import MeepleIcon from './MeepleIcon';
 import KingdomScannerModal from './KingdomScannerModal';
 import { 
-  Crown, 
   Castle, 
   RotateCcw, 
   AlertTriangle,
@@ -31,8 +30,7 @@ export default function StepScore({
   setPlayerGrids,
   gridSize,
   setGridSize,
-  bonuses,
-  setBonuses
+  bonuses
 }) {
   const [activePlayerId, setActivePlayerId] = useState(selectedMeeples[0] || 'blue');
   const [selectedTerrain, setSelectedTerrain] = useState('champs');
@@ -41,7 +39,6 @@ export default function StepScore({
   const [pendingLinkSource, setPendingLinkSource] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
 
-  // Pointer drag painting state
   const isPointerDownRef = useRef(false);
   const hasDraggedRef = useRef(false);
   const initialTouchCellHadSameTerrainRef = useRef(false);
@@ -281,7 +278,6 @@ export default function StepScore({
     unlinkCell(newGrid, center, center);
     newGrid[center][center] = { terrain: 'chateau', crowns: 0, link: null };
 
-    // Si une tuile était au centre et qu'un château existait ailleurs, on les permute pour ne pas perdre la tuile
     if (oldCastlePos && (oldCastlePos.r !== center || oldCastlePos.c !== center) && centerPreviousCell.terrain !== 'empty') {
       newGrid[oldCastlePos.r][oldCastlePos.c] = centerPreviousCell;
     }
@@ -310,16 +306,14 @@ export default function StepScore({
     return `${count} cases`;
   };
 
-  const formatCrowns = (count) => `${count} 👑`;
-
   return (
     <div 
       className="space-y-3.5 max-w-sm sm:max-w-md mx-auto px-1 animate-fade-in select-none"
       onPointerUp={handlePointerUp}
     >
-      {/* 1. Sélecteur de Joueur (Compact) */}
-      <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-1.5 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-md">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+      {/* 1. Segmented Control de Sélection du Joueur */}
+      <div className="bg-zinc-200/70 dark:bg-zinc-900 p-1 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
           {activePlayers.map((player) => {
             const isSelected = player.id === currentPlayer.id;
             return (
@@ -333,19 +327,26 @@ export default function StepScore({
                   setPendingLinkSource(null);
                   setConfirmClear(false);
                 }}
-                className={`p-2 rounded-xl border flex items-center justify-between transition-all ${
+                className={`py-2 px-2.5 rounded-xl flex items-center justify-between transition-all ${
                   isSelected
-                    ? `${player.border} ${player.bgLight} ring-2 ring-amber-400/80 shadow-sm`
-                    : 'border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/40 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900'
+                    ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
                 }`}
               >
                 <div className="flex items-center gap-1.5 truncate">
-                  <MeepleIcon color={player.color} size={22} showCrown={isSelected} />
-                  <span className="text-xs font-bold truncate text-slate-800 dark:text-slate-200">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: player.color }}
+                  />
+                  <span className="text-xs font-bold truncate">
                     {player.name}
                   </span>
                 </div>
-                <span className="text-xs font-black text-amber-600 dark:text-amber-300 bg-white dark:bg-slate-950/80 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 ml-1">
+                <span className={`text-xs font-extrabold tabular-nums px-1.5 py-0.5 rounded-md ml-1 ${
+                  isSelected
+                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                    : 'text-zinc-400 dark:text-zinc-500'
+                }`}>
                   {player.scoreData.totalScore}
                 </span>
               </button>
@@ -354,55 +355,60 @@ export default function StepScore({
         </div>
       </div>
 
-      {/* 2. Bandeau Score Total & Bouton Scanner 📷 */}
-      <div className="bg-gradient-to-r from-amber-50 via-white to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-lg flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <MeepleIcon color={currentPlayer.color} size={36} />
+      {/* 2. Carte Bento Résumé du Score & Bouton Photo */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-3.5 border border-zinc-200/80 dark:border-zinc-800/80 shadow-card flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <MeepleIcon color={currentPlayer.color} size={38} />
           <div>
-            <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-              <span>Royaume {currentPlayer.name}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-mono font-bold">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                {currentPlayer.name}
+              </span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold">
                 {gridSize}×{gridSize}
               </span>
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              {formatPlacedCells(currentScoreData.totalPlacedCells)} • {formatCrowns(currentScoreData.totalCrowns)}
+            <div className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+              {formatPlacedCells(currentScoreData.totalPlacedCells)} • {currentScoreData.totalCrowns} 👑
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => {
               playClickSound();
               setIsScannerOpen(true);
             }}
-            className="p-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-md hover:scale-105 active:scale-95 transition-all flex flex-col items-center justify-center gap-0.5"
+            className="px-2.5 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all flex items-center gap-1.5 text-xs font-semibold"
             title="Scanner le royaume avec l'appareil photo"
           >
-            <Camera size={16} />
-            <span className="text-[9px] font-black uppercase">Photo</span>
+            <Camera size={15} className="text-amber-500" />
+            <span>Scanner</span>
           </button>
 
-          <div className="text-right pl-1">
-            <div className="text-2xl font-black font-medieval text-amber-600 dark:text-amber-300 leading-none">
-              {currentScoreData.totalScore} <span className="text-xs font-sans text-slate-500 dark:text-slate-400 font-bold">{currentScoreData.totalScore > 1 ? 'pts' : 'pt'}</span>
+          <div className="text-right">
+            <div className="text-2xl font-extrabold font-display tabular-nums text-zinc-900 dark:text-white leading-none">
+              {currentScoreData.totalScore}
+              <span className="text-xs font-sans text-zinc-400 dark:text-zinc-500 font-semibold ml-0.5">
+                {currentScoreData.totalScore > 1 ? 'pts' : 'pt'}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Contrôles de Grille (Taille 5x5/7x7 & Outils) */}
+      {/* 3. Contrôles de Grille (Segmented Control 5x5 / 7x7 & Actions) */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] font-bold shadow-sm">
+        <div className="flex items-center bg-zinc-200/70 dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 text-xs font-semibold">
           <button
             type="button"
             onClick={() => handleGridSizeChange(5)}
-            className={`px-2.5 py-1 rounded-lg transition-all ${
+            className={`px-3 py-1 rounded-lg transition-all ${
               gridSize === 5 
-                ? 'bg-amber-500 text-slate-950 shadow font-extrabold' 
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs font-bold' 
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
             }`}
           >
             5×5
@@ -410,10 +416,10 @@ export default function StepScore({
           <button
             type="button"
             onClick={() => handleGridSizeChange(7)}
-            className={`px-2.5 py-1 rounded-lg transition-all ${
+            className={`px-3 py-1 rounded-lg transition-all ${
               gridSize === 7 
-                ? 'bg-amber-500 text-slate-950 shadow font-extrabold' 
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs font-bold' 
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
             }`}
           >
             7×7
@@ -424,19 +430,19 @@ export default function StepScore({
           <button
             type="button"
             onClick={handleCenterCastle}
-            className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-300 flex items-center gap-1 transition-all shadow-sm"
+            className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-1.5 transition-all shadow-xs"
             title="Centrer le château"
           >
-            <Castle size={13} />
+            <Castle size={13} className="text-amber-500" />
             <span>Centrer</span>
           </button>
           <button
             type="button"
             onClick={handleResetCurrentGrid}
-            className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold flex items-center gap-1 transition-all shadow-sm ${
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
               confirmClear
                 ? 'bg-rose-500 text-white border-rose-600 animate-pulse'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400'
+                : 'bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400'
             }`}
             title="Vider la grille"
           >
@@ -446,15 +452,14 @@ export default function StepScore({
         </div>
       </div>
 
-      {/* 4. Palette d'Outils avec Pinceau & Bouton de Liaison Domino 🔗 */}
-      <div className="bg-white dark:bg-slate-900/95 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-md space-y-2.5">
-        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-            <Brush size={14} className="text-amber-500 dark:text-amber-400" />
+      {/* 4. Palette d'Outils Moderne */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-3 border border-zinc-200/80 dark:border-zinc-800/80 shadow-soft space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <Brush size={13} className="text-amber-500" />
             <span>Pinceau de domaine</span>
           </div>
 
-          {/* Bouton de Liaison Domino */}
           <button
             type="button"
             onClick={() => {
@@ -462,14 +467,14 @@ export default function StepScore({
               setPendingLinkSource(null);
               setSelectedTerrain(selectedTerrain === 'link' ? 'champs' : 'link');
             }}
-            className={`px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 transition-all ${
+            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 transition-all ${
               selectedTerrain === 'link'
-                ? 'bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300 scale-105'
-                : 'bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-indigo-600 dark:text-indigo-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-500/30'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
             }`}
           >
-            <Link2 size={13} />
-            <span>{selectedTerrain === 'link' ? 'Mode Liaison Actif' : 'Lier Domino 🔗'}</span>
+            <Link2 size={12} />
+            <span>{selectedTerrain === 'link' ? 'Liaison active' : 'Lier Domino'}</span>
           </button>
         </div>
 
@@ -485,14 +490,14 @@ export default function StepScore({
                   setPendingLinkSource(null);
                   setSelectedTerrain(key);
                 }}
-                className={`py-2 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all ${
+                className={`py-2 px-1 rounded-xl border flex flex-col items-center gap-1 transition-all ${
                   isSelected
-                    ? 'ring-2 ring-amber-400 scale-102 shadow-md border-amber-400 ' + terrain.bgClass
-                    : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 opacity-75 hover:opacity-100'
+                    ? 'ring-2 ring-zinc-900 dark:ring-white scale-[1.02] shadow-xs ' + terrain.bgClass
+                    : 'bg-zinc-50 dark:bg-zinc-950/50 border-zinc-200/70 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-300 opacity-75 hover:opacity-100'
                 }`}
               >
-                <TerrainIcon type={key} size={17} />
-                <span className="text-[10px] font-bold truncate max-w-full">
+                <TerrainIcon type={key} size={16} />
+                <span className="text-[10px] font-semibold truncate max-w-full">
                   {terrain.shortName}
                 </span>
               </button>
@@ -500,22 +505,21 @@ export default function StepScore({
           })}
         </div>
 
-        {/* Tip text contextuel */}
-        <div className="flex items-center justify-center gap-1 text-[11px] text-slate-500 dark:text-slate-400/90 pt-0.5">
-          <Info size={12} className="text-slate-400 flex-shrink-0" />
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 dark:text-zinc-500 pt-0.5">
+          <Info size={12} className="flex-shrink-0" />
           <span>
             {selectedTerrain === 'link'
-              ? (pendingLinkSource ? 'Touchez une case adjacente pour former le domino 🔗' : 'Touchez 2 cases adjacentes pour les lier en domino (ou touchez une liaison pour la retirer)')
-              : 'Cliquer sur une case pour changer les 👑'}
+              ? (pendingLinkSource ? 'Touchez une case adjacente pour lier le domino' : 'Touchez 2 cases adjacentes pour les lier en domino')
+              : 'Touchez une case déjà peinte pour ajouter des 👑'}
           </span>
         </div>
       </div>
 
       {/* 5. Grille Interactive */}
-      <div className="flex justify-center p-2.5 sm:p-3 bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md dark:shadow-xl overflow-x-auto">
-        <div className="inline-block space-y-1 sm:space-y-1.5">
+      <div className="flex justify-center p-3 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/80 dark:border-zinc-800/80 shadow-card overflow-x-auto">
+        <div className="inline-block space-y-1.5">
           {currentGrid.map((row, r) => (
-            <div key={r} className="flex gap-1 sm:gap-1.5">
+            <div key={r} className="flex gap-1.5">
               {row.map((cell, c) => {
                 const isDomainHighlighted = highlightedDomain?.cells.some(
                   coord => coord.r === r && coord.c === c
@@ -563,103 +567,103 @@ export default function StepScore({
           {currentScoreData.warnings.map((w, idx) => (
             <div
               key={idx}
-              className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs ${
+              className={`p-3 rounded-2xl border flex items-center gap-2.5 text-xs ${
                 w.type === 'illegal'
-                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-600 dark:text-rose-300 animate-pulse'
+                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-300'
                   : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
               }`}
             >
-              <AlertTriangle size={14} className={w.type === 'illegal' ? 'text-rose-500 flex-shrink-0' : 'text-amber-500 flex-shrink-0'} />
-              <span>{w.text}</span>
+              <AlertTriangle size={15} className={w.type === 'illegal' ? 'text-rose-500 flex-shrink-0' : 'text-amber-500 flex-shrink-0'} />
+              <span className="leading-snug">{w.text}</span>
             </div>
           ))}
         </div>
       )}
 
       {/* 7. Points Additionnels */}
-      <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-md space-y-2.5">
-        <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-3 border border-zinc-200/80 dark:border-zinc-800/80 shadow-soft space-y-2.5">
+        <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
           Points additionnels
         </span>
 
         <div className="grid grid-cols-2 gap-2">
           {/* Empire du Milieu */}
           <div
-            className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
+            className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
               currentScoreData.middleEmpireScore > 0
-                ? 'bg-amber-50 dark:bg-amber-500/15 border-amber-400 shadow ring-1 ring-amber-400/40'
-                : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800'
+                ? 'bg-amber-500/8 dark:bg-amber-500/10 border-amber-500/40'
+                : 'bg-zinc-50 dark:bg-zinc-950/40 border-zinc-200/70 dark:border-zinc-800/80'
             }`}
           >
             <div className="flex items-center justify-between gap-1.5">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex-1 min-w-0 leading-tight">
-                🏰 Empire Milieu
+              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex-1 min-w-0 leading-tight">
+                Empire du Milieu
               </span>
-              <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
+              <span className={`text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
                 currentScoreData.middleEmpireScore > 0 
-                  ? 'bg-amber-400 text-slate-950 shadow-sm' 
-                  : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                  ? 'bg-amber-500 text-zinc-950' 
+                  : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
               }`}>
                 {currentScoreData.middleEmpireScore > 0 ? '+10 pts' : '0 pt'}
               </span>
             </div>
 
-            <div className="mt-1.5 text-[10px] flex items-center gap-1 font-medium">
+            <div className="mt-1.5 text-[11px] font-medium">
               {currentScoreData.isCastleCentered ? (
                 <span className="text-emerald-600 dark:text-emerald-400">✓ Château centré</span>
               ) : (
-                <span className="text-slate-500 dark:text-slate-400">✗ Château non centré</span>
+                <span className="text-zinc-400 dark:text-zinc-500">Château non centré</span>
               )}
             </div>
           </div>
 
           {/* Harmonie */}
           <div
-            className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
+            className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
               currentScoreData.harmonyScore > 0
-                ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-400 shadow ring-1 ring-emerald-400/40'
-                : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800'
+                ? 'bg-emerald-500/8 dark:bg-emerald-500/10 border-emerald-500/40'
+                : 'bg-zinc-50 dark:bg-zinc-950/40 border-zinc-200/70 dark:border-zinc-800/80'
             }`}
           >
             <div className="flex items-center justify-between gap-1.5">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex-1 min-w-0 leading-tight">
-                ✨ Harmonie
+              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex-1 min-w-0 leading-tight">
+                Harmonie
               </span>
-              <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
+              <span className={`text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
                 currentScoreData.harmonyScore > 0 
-                  ? 'bg-emerald-400 text-slate-950 shadow-sm' 
-                  : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                  ? 'bg-emerald-500 text-white' 
+                  : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
               }`}>
                 {currentScoreData.harmonyScore > 0 ? '+5 pts' : '0 pt'}
               </span>
             </div>
 
-            <div className="mt-1.5 text-[10px] flex items-center gap-1 font-medium">
+            <div className="mt-1.5 text-[11px] font-medium">
               {currentScoreData.isCompleteKingdom ? (
                 <span className="text-emerald-600 dark:text-emerald-400">✓ Grille pleine</span>
               ) : (
-                <span className="text-slate-500 dark:text-slate-400">✗ {formatEmptyCells(currentScoreData.emptyCells)}</span>
+                <span className="text-zinc-400 dark:text-zinc-500">{formatEmptyCells(currentScoreData.emptyCells)}</span>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* 8. Liste des Domaines */}
-      <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-md space-y-2.5">
+      {/* 8. Détail des Domaines */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-3 border border-zinc-200/80 dark:border-zinc-800/80 shadow-soft space-y-2.5">
         <div className="space-y-0.5 text-left">
-          <span className="font-bold text-xs text-slate-700 dark:text-slate-200 block uppercase tracking-wider">
+          <span className="font-semibold text-[11px] text-zinc-500 dark:text-zinc-400 block uppercase tracking-wider">
             Détail des Domaines ({currentScoreData.domains.length})
           </span>
-          <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-            <Info size={11} className="text-slate-400" />
-            <span>Touchez un domaine pour le surligner sur la grille</span>
+          <div className="flex items-center gap-1 text-[11px] text-zinc-400 dark:text-zinc-500">
+            <Info size={11} />
+            <span>Touchez un domaine pour le mettre en évidence</span>
           </div>
         </div>
 
         {currentScoreData.domains.length === 0 ? (
-          <p className="text-xs text-slate-500 italic p-2.5 text-center bg-slate-50 dark:bg-slate-950/40 rounded-xl">
-            Aucun terrain valide connecté pour l'instant.
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 p-3 text-center bg-zinc-50 dark:bg-zinc-950/40 rounded-xl">
+            Aucun terrain connecté pour le moment.
           </p>
         ) : (
           <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
@@ -675,32 +679,32 @@ export default function StepScore({
                     playClickSound();
                     setHighlightedDomain(isHighlighted ? null : dom);
                   }}
-                  className={`w-full p-2 rounded-xl border text-left flex items-center justify-between transition-all ${
+                  className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all ${
                     isHighlighted
-                      ? 'bg-amber-50 dark:bg-amber-500/20 border-amber-400 ring-1 ring-amber-300'
-                      : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900'
+                      ? 'bg-amber-500/10 border-amber-500/60'
+                      : 'bg-zinc-50/80 dark:bg-zinc-950/50 border-zinc-200/70 dark:border-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1 rounded-lg ${terrain.bgClass}`}>
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-lg ${terrain.bgClass}`}>
                       <TerrainIcon type={dom.terrain} size={14} />
                     </div>
-                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
                       {terrain.name}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-mono">
+                  <div className="flex items-center gap-3 tabular-nums">
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
                       <span>{dom.size}</span>
                       <span>×</span>
-                      <span className="text-amber-600 dark:text-amber-300 font-bold">{dom.crowns} 👑</span>
+                      <span className="text-amber-600 dark:text-amber-400 font-semibold">{dom.crowns} 👑</span>
                     </div>
 
-                    <div className={`text-xs font-black min-w-[45px] text-right font-mono ${
-                      dom.score > 0 ? 'text-amber-600 dark:text-amber-300' : 'text-slate-400 dark:text-slate-600'
+                    <div className={`text-xs font-extrabold min-w-[48px] text-right ${
+                      dom.score > 0 ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600'
                     }`}>
-                      = {dom.score} <span className="text-[9px] font-sans text-slate-400">{dom.score > 1 ? 'pts' : 'pt'}</span>
+                      {dom.score} <span className="text-[10px] font-normal text-zinc-400">{dom.score > 1 ? 'pts' : 'pt'}</span>
                     </div>
                   </div>
                 </button>

@@ -7,46 +7,21 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
-        kingdom: {
-          gold: '#EAB308',
-          wood: '#854D0E',
-          parchment: '#FEF9C3',
-          parchmentDark: '#FEF08A',
-          castle: '#F3E8FF',
-          wheat: '#EAB308',
-          wheatBg: '#FEF3C7',
-          forest: '#15803D',
-          forestBg: '#DCFCE7',
-          lake: '#2563EB',
-          lakeBg: '#DBEAFE',
-          pasture: '#65A30D',
-          pastureBg: '#ECFCCB',
-          swamp: '#7E22CE',
-          swampBg: '#F3E8FF',
-          mine: '#334155',
-          mineBg: '#F1F5F9',
-          meepleBlue: '#0284C7',
-          meepleGreen: '#16A34A',
-          meepleYellow: '#EAB308',
-          meeplePink: '#E11D48',
-        }
-      },
       fontFamily: {
-        medieval: ['Cinzel', 'serif'],
-        game: ['Poppins', 'Nunito', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
+        medieval: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
+        game: ['Inter', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'castle': '0 8px 24px -4px rgba(0, 0, 0, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.1)',
-        'tile': '0 4px 6px -1px rgba(0, 0, 0, 0.15), inset 0 2px 0 rgba(255, 255, 255, 0.25)',
-        'meeple': '0 4px 10px rgba(0,0,0,0.25)',
+        'soft': '0 2px 12px -2px rgba(0, 0, 0, 0.04), 0 1px 4px -1px rgba(0, 0, 0, 0.02)',
+        'card': '0 4px 20px -4px rgba(0, 0, 0, 0.06), 0 1px 3px -1px rgba(0, 0, 0, 0.03)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.25s ease-out forwards',
+        'fade-in': 'fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'bounce-short': 'bounceShort 0.5s ease-in-out',
         'shake': 'shake 0.4s ease-in-out',
-        'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        'glow': 'glow 2s infinite alternate',
+        'pop': 'pop 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
       },
       keyframes: {
         fadeIn: {
@@ -55,21 +30,17 @@ export default {
         },
         bounceShort: {
           '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
+          '50%': { transform: 'translateY(-6px)' },
         },
         shake: {
           '0%, 100%': { transform: 'translateX(0)' },
-          '20%, 60%': { transform: 'translateX(-4px)' },
-          '40%, 80%': { transform: 'translateX(4px)' },
+          '20%, 60%': { transform: 'translateX(-3px)' },
+          '40%, 80%': { transform: 'translateX(3px)' },
         },
         pop: {
-          '0%': { transform: 'scale(0.8)', opacity: '0' },
+          '0%': { transform: 'scale(0.94)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
-        glow: {
-          '0%': { filter: 'drop-shadow(0 0 4px rgba(234, 179, 8, 0.4))' },
-          '100%': { filter: 'drop-shadow(0 0 12px rgba(234, 179, 8, 0.85))' },
-        }
       }
     },
   },

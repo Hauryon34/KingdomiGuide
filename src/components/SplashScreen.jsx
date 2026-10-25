@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
 export default function SplashScreen({ onFinish }) {
-  const [stage, setStage] = useState('center'); // 'center' -> 'expanding' -> 'fadeout'
+  const [stage, setStage] = useState('center');
 
   useEffect(() => {
-    // Étape 1 : Couronne au centre
     const t1 = setTimeout(() => {
       setStage('expanding');
-    }, 400);
+    }, 350);
 
-    // Étape 2 : Fondu de transition vers l'app
     const t2 = setTimeout(() => {
       setStage('fadeout');
-    }, 1000);
+    }, 950);
 
-    // Étape 3 : Fin du splash screen
     const t3 = setTimeout(() => {
       onFinish();
-    }, 1300);
+    }, 1200);
 
     return () => {
       clearTimeout(t1);
@@ -28,22 +25,20 @@ export default function SplashScreen({ onFinish }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-950 transition-opacity duration-300 pointer-events-none overflow-hidden ${
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-zinc-950 transition-opacity duration-300 pointer-events-none overflow-hidden ${
         stage === 'fadeout' ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* Disque doré pur qui s'étend depuis le centre jusqu'à remplir tout l'écran */}
       <div
-        className={`absolute rounded-full bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 transition-all duration-700 ease-out flex items-center justify-center ${
+        className={`absolute rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center justify-center ${
           stage === 'center'
-            ? 'w-24 h-24 scale-100 opacity-100 shadow-2xl shadow-amber-500/50'
-            : 'w-[300vmax] h-[300vmax] scale-100 opacity-100'
+            ? 'w-20 h-20 scale-100 opacity-100 shadow-2xl shadow-amber-500/40'
+            : 'w-[280vmax] h-[280vmax] scale-100 opacity-100'
         }`}
       >
-        {/* Couronne Royale Pure Noire (Sans aucun blason, boîte ou flou) */}
         <svg
           viewBox="0 0 24 24"
-          className={`w-14 h-14 text-slate-950 fill-slate-950 transition-all duration-500 ${
+          className={`w-11 h-11 text-zinc-950 fill-zinc-950 transition-all duration-500 ${
             stage === 'center' ? 'scale-100 opacity-100' : 'scale-125 opacity-0'
           }`}
         >

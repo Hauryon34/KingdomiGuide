@@ -57,113 +57,110 @@ export default function StepTurnOrder({
 
   return (
     <div className="space-y-4 max-w-sm mx-auto px-1 animate-fade-in text-center">
-      {/* Title Section & Reshuffle Button */}
+      {/* Header Row */}
       <div className="flex items-center justify-between px-1">
-        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider border border-amber-500/30">
-          <Crown size={13} className="fill-amber-500 dark:fill-amber-400" />
-          Ordre du 1er Tour
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-bold tracking-tight">
+          <Crown size={12} className="fill-current" />
+          <span>1er Tour</span>
         </div>
 
         <button
           type="button"
           disabled={isShuffling}
           onClick={runShuffleAnimation}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-amber-600 dark:text-amber-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all shadow-sm ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 active:scale-95 transition-all shadow-xs ${
             isShuffling ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           title="Relancer le tirage au sort"
         >
-          <Dices size={14} className={isShuffling ? 'animate-spin' : ''} />
+          <Dices size={14} className={isShuffling ? 'animate-spin text-amber-500' : 'text-amber-500'} />
           <span>{isShuffling ? 'Tirage...' : 'Relancer'}</span>
         </button>
       </div>
 
-      <div className="text-center">
-        <h2 className="text-xl sm:text-2xl font-black font-medieval text-slate-900 dark:text-amber-200">
-          Tirage au Sort
+      <div className="space-y-1">
+        <h2 className="text-xl font-extrabold font-display tracking-tight text-zinc-900 dark:text-zinc-100">
+          Ordre de Jeu
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {isShuffling ? 'Mélange des Rois en cours...' : 'Voici l’ordre de choix des dominos pour la manche'}
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          {isShuffling ? 'Tirage aléatoire en cours...' : 'Ordre officiel de choix des dominos'}
         </p>
       </div>
 
-      {/* Main Draw Results Box */}
-      <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-lg dark:shadow-xl space-y-4 relative overflow-hidden">
-        {/* Shuffling Loading State */}
+      {/* Main Card */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 border border-zinc-200/80 dark:border-zinc-800/80 shadow-card space-y-4 relative overflow-hidden">
         {isShuffling ? (
           <div className="py-8 flex flex-col items-center justify-center gap-3 animate-pulse">
-            <div className="p-4 rounded-3xl bg-amber-500/20 ring-4 ring-amber-400/50 shadow-2xl relative">
-              <Sparkles size={24} className="text-amber-500 dark:text-amber-300 absolute -top-2 -right-2 animate-bounce" />
+            <div className="p-4 rounded-3xl bg-amber-500/10 ring-2 ring-amber-500/30 relative">
+              <Sparkles size={20} className="text-amber-500 absolute -top-1.5 -right-1.5 animate-bounce" />
               <MeepleIcon
-                color={activePlayers[shuffleIndex % Math.max(1, activePlayers.length)]?.color || '#0284c7'}
-                size={52}
+                color={activePlayers[shuffleIndex % Math.max(1, activePlayers.length)]?.color || '#0EA5E9'}
+                size={50}
                 showCrown={true}
               />
             </div>
             <div className="space-y-0.5">
-              <span className="text-sm font-black font-medieval text-amber-600 dark:text-amber-300 block">
-                Mélange des Rois...
+              <span className="text-sm font-bold font-display text-zinc-900 dark:text-zinc-100 block">
+                Mélange des joueurs...
               </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-mono">
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-500 block">
                 Attribution aléatoire
               </span>
             </div>
           </div>
         ) : (
-          /* Final Results State */
           <div className="space-y-3 animate-fade-in">
-            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Ordre de jeu des Rois
-            </p>
-
-            {/* 4 Players Layout: 2x2 Grid */}
             {isFourPlayers ? (
-              <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+              <div className="grid grid-cols-2 gap-2.5">
                 {turnOrder.map((player, idx) => (
                   <div
                     key={player.id}
                     className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${
                       idx === 0
-                        ? 'bg-amber-50 dark:bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/60 shadow-lg scale-102'
-                        : 'bg-slate-50 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800'
+                        ? 'bg-amber-500/8 dark:bg-amber-500/10 border-amber-500/60 ring-1 ring-amber-500/30'
+                        : 'bg-zinc-50/80 dark:bg-zinc-950/50 border-zinc-200/70 dark:border-zinc-800/80'
                     }`}
                   >
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                      idx === 0 ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      idx === 0
+                        ? 'bg-amber-500 text-zinc-950'
+                        : 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
                     }`}>
-                      #{idx + 1} {idx === 0 ? '👑' : ''}
+                      {idx === 0 ? '1er • Roi' : `${idx + 1}e`}
                     </span>
-                    <MeepleIcon color={player.color} size={40} showCrown={idx === 0} />
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-full">
+                    <MeepleIcon color={player.color} size={38} showCrown={idx === 0} />
+                    <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-full">
                       {player.name}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              /* 2 to 3 Players Layout: 1 Row with Arrows */
-              <div className="flex items-center justify-center gap-2 flex-wrap pt-0.5">
+              <div className="flex items-center justify-center gap-2 flex-wrap">
                 {turnOrder.map((player, idx) => (
                   <React.Fragment key={player.id}>
-                    <div className={`p-2.5 rounded-2xl border flex flex-col items-center gap-1.5 min-w-[76px] transition-all ${
-                      idx === 0
-                        ? 'bg-amber-50 dark:bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/60 shadow-lg scale-105'
-                        : 'bg-slate-50 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800'
-                    }`}
+                    <div
+                      className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 min-w-[82px] transition-all ${
+                        idx === 0
+                          ? 'bg-amber-500/8 dark:bg-amber-500/10 border-amber-500/60 ring-1 ring-amber-500/30 shadow-xs'
+                          : 'bg-zinc-50/80 dark:bg-zinc-950/50 border-zinc-200/70 dark:border-zinc-800/80'
+                      }`}
                     >
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                        idx === 0 ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        idx === 0
+                          ? 'bg-amber-500 text-zinc-950'
+                          : 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
                       }`}>
-                        #{idx + 1} {idx === 0 ? '👑' : ''}
+                        {idx === 0 ? '1er' : `${idx + 1}e`}
                       </span>
                       <MeepleIcon color={player.color} size={36} showCrown={idx === 0} />
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[70px]">
+                      <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[72px]">
                         {player.name}
                       </span>
                     </div>
 
                     {idx < turnOrder.length - 1 && (
-                      <ChevronRight size={18} className="text-amber-500 dark:text-amber-400/70 flex-shrink-0" />
+                      <ChevronRight size={16} className="text-zinc-400 dark:text-zinc-600 flex-shrink-0" />
                     )}
                   </React.Fragment>
                 ))}
@@ -172,37 +169,28 @@ export default function StepTurnOrder({
           </div>
         )}
 
-        {/* 2-Players Special Sequence Flow */}
+        {/* 2-Players Sequence Timeline */}
         {!isShuffling && isTwoPlayers && (
-          <div className="pt-3 border-t border-slate-200 dark:border-slate-800/90 space-y-2 text-left animate-fade-in">
-            <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide text-center">
-              Séquence des 4 choix (2 meeples / joueur)
+          <div className="pt-3.5 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2.5 text-left animate-fade-in">
+            <p className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 text-center">
+              Placement des 4 pions (2 par joueur)
             </p>
 
             <div className="grid grid-cols-4 gap-1.5 text-center">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-0.5">
-                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">1er Choix</span>
-                <MeepleIcon color={turnOrder[0]?.color || '#0284c7'} size={20} showCrown={false} />
-                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate max-w-full">{turnOrder[0]?.name}</span>
-              </div>
-
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-0.5">
-                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">2e Choix</span>
-                <MeepleIcon color={turnOrder[1]?.color || '#16a34a'} size={20} showCrown={false} />
-                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate max-w-full">{turnOrder[1]?.name}</span>
-              </div>
-
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-0.5">
-                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">3e Choix</span>
-                <MeepleIcon color={turnOrder[1]?.color || '#16a34a'} size={20} showCrown={false} />
-                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate max-w-full">{turnOrder[1]?.name}</span>
-              </div>
-
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-0.5">
-                <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">4e Choix</span>
-                <MeepleIcon color={turnOrder[0]?.color || '#0284c7'} size={20} showCrown={false} />
-                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate max-w-full">{turnOrder[0]?.name}</span>
-              </div>
+              {[turnOrder[0], turnOrder[1], turnOrder[1], turnOrder[0]].map((p, i) => (
+                <div
+                  key={i}
+                  className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col items-center gap-1"
+                >
+                  <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500">
+                    #{i + 1}
+                  </span>
+                  <MeepleIcon color={p?.color || '#0EA5E9'} size={20} showCrown={false} />
+                  <span className="text-[10px] font-semibold text-zinc-700 dark:text-zinc-200 truncate max-w-full">
+                    {p?.name}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}
