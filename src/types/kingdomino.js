@@ -5,8 +5,8 @@ export const MEEPLES = [
     color: '#0284c7',
     gradient: 'from-sky-500 to-blue-700',
     border: 'border-sky-500',
-    bgLight: 'bg-sky-500/20',
-    text: 'text-sky-400',
+    bgLight: 'bg-sky-500/15 dark:bg-sky-500/20',
+    text: 'text-sky-600 dark:text-sky-400',
     woodColor: '#1d4ed8'
   },
   {
@@ -15,8 +15,8 @@ export const MEEPLES = [
     color: '#16a34a',
     gradient: 'from-emerald-500 to-green-700',
     border: 'border-emerald-500',
-    bgLight: 'bg-emerald-500/20',
-    text: 'text-emerald-400',
+    bgLight: 'bg-emerald-500/15 dark:bg-emerald-500/20',
+    text: 'text-emerald-600 dark:text-emerald-400',
     woodColor: '#15803d'
   },
   {
@@ -25,8 +25,8 @@ export const MEEPLES = [
     color: '#eab308',
     gradient: 'from-amber-400 to-yellow-600',
     border: 'border-amber-500',
-    bgLight: 'bg-amber-500/20',
-    text: 'text-amber-400',
+    bgLight: 'bg-amber-500/15 dark:bg-amber-500/20',
+    text: 'text-amber-600 dark:text-amber-400',
     woodColor: '#b45309'
   },
   {
@@ -35,8 +35,8 @@ export const MEEPLES = [
     color: '#e11d48',
     gradient: 'from-rose-400 to-pink-600',
     border: 'border-rose-500',
-    bgLight: 'bg-rose-500/20',
-    text: 'text-rose-400',
+    bgLight: 'bg-rose-500/15 dark:bg-rose-500/20',
+    text: 'text-rose-600 dark:text-rose-400',
     woodColor: '#be123c'
   }
 ];
@@ -49,8 +49,8 @@ export const TERRAINS = {
     color: '#334155',
     maxCrowns: 0,
     icon: 'Eraser',
-    bgClass: 'bg-slate-900/70 border-dashed border-slate-700/80',
-    badgeClass: 'bg-slate-800 text-slate-400',
+    bgClass: 'bg-slate-100/90 dark:bg-slate-900/70 border-dashed border-slate-300 dark:border-slate-700/80 text-slate-600 dark:text-slate-300',
+    badgeClass: 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
     description: 'Effacer la case'
   },
   chateau: {
@@ -60,7 +60,7 @@ export const TERRAINS = {
     color: '#e2e8f0',
     maxCrowns: 0,
     icon: 'Castle',
-    bgClass: 'terrain-chateau text-slate-900 border-slate-300 font-bold',
+    bgClass: 'terrain-chateau text-slate-900 border-amber-400 dark:border-slate-300 font-bold',
     badgeClass: 'bg-slate-200 text-slate-900',
     description: 'Château de départ'
   },
@@ -71,7 +71,7 @@ export const TERRAINS = {
     color: '#eab308',
     maxCrowns: 1,
     icon: 'Wheat',
-    bgClass: 'terrain-champs text-amber-950 border-amber-300',
+    bgClass: 'terrain-champs text-amber-950 border-amber-400 dark:border-amber-300',
     badgeClass: 'bg-amber-500 text-amber-950',
     description: 'Champs de blé (max 1 👑)'
   },
@@ -82,7 +82,7 @@ export const TERRAINS = {
     color: '#15803d',
     maxCrowns: 1,
     icon: 'Trees',
-    bgClass: 'terrain-foret text-emerald-950 border-emerald-400',
+    bgClass: 'terrain-foret text-white border-emerald-500 dark:border-emerald-400',
     badgeClass: 'bg-emerald-600 text-emerald-100',
     description: 'Forêt dense (max 1 👑)'
   },
@@ -93,7 +93,7 @@ export const TERRAINS = {
     color: '#2563eb',
     maxCrowns: 1,
     icon: 'Waves',
-    bgClass: 'terrain-eau text-blue-950 border-blue-400',
+    bgClass: 'terrain-eau text-white border-blue-500 dark:border-blue-400',
     badgeClass: 'bg-blue-600 text-blue-100',
     description: 'Lacs & Mer (max 1 👑)'
   },
@@ -104,7 +104,7 @@ export const TERRAINS = {
     color: '#65a30d',
     maxCrowns: 2,
     icon: 'Sprout',
-    bgClass: 'terrain-prairie text-lime-950 border-lime-400',
+    bgClass: 'terrain-prairie text-lime-950 border-lime-500 dark:border-lime-400',
     badgeClass: 'bg-lime-600 text-lime-100',
     description: 'Prairies vertes (max 2 👑)'
   },
@@ -115,7 +115,7 @@ export const TERRAINS = {
     color: '#7e22ce',
     maxCrowns: 2,
     icon: 'Eye',
-    bgClass: 'terrain-marais text-purple-100 border-purple-400',
+    bgClass: 'terrain-marais text-purple-100 border-purple-500 dark:border-purple-400',
     badgeClass: 'bg-purple-700 text-purple-100',
     description: 'Marais (max 2 👑)'
   },
@@ -126,7 +126,7 @@ export const TERRAINS = {
     color: '#334155',
     maxCrowns: 3,
     icon: 'Pickaxe',
-    bgClass: 'terrain-mine text-slate-100 border-slate-500',
+    bgClass: 'terrain-mine text-slate-100 border-slate-600 dark:border-slate-500',
     badgeClass: 'bg-slate-700 text-amber-300',
     description: 'Mines d’or (max 3 👑)'
   }

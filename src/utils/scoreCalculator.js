@@ -20,6 +20,9 @@ export function createEmptyGrid(size = 5) {
  * Chaque domino posé DOIT toucher soit le Château (joker), soit un biome IDENTIQUE déjà légalement raccordé.
  */
 export function calculateKingdomScore(grid, options = { middleEmpireBonus: true, harmonyBonus: true }) {
+  if (!Array.isArray(grid) || grid.length === 0) {
+    grid = createEmptyGrid(5);
+  }
   const size = grid.length;
   const domains = [];
   let castlePos = null;
@@ -32,11 +35,11 @@ export function calculateKingdomScore(grid, options = { middleEmpireBonus: true,
   // 1. Recenser les positions
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
-      if (grid[r][c].terrain === 'chateau') {
+      if (grid[r]?.[c]?.terrain === 'chateau') {
         castleCount++;
         castlePos = { r, c };
       }
-      if (grid[r][c].terrain === 'empty') {
+      if (!grid[r]?.[c] || grid[r][c].terrain === 'empty') {
         emptyCells++;
       } else {
         totalPlacedCells++;
@@ -45,14 +48,14 @@ export function calculateKingdomScore(grid, options = { middleEmpireBonus: true,
   }
 
   // 2. Regrouper les cellules en "Unités" (soit un Domino 1x2 lié, soit une tuile individuelle)
-  const units = []; // array of array of coords [{ coords: [{r, c}, {r, c}], isCastle: false }]
+  const units = [];
   const cellToUnitMap = Array.from({ length: size }, () => Array(size).fill(null));
   let unitIndex = 0;
 
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
-      const cell = grid[r][c];
-      if (cell.terrain === 'empty' || cellToUnitMap[r][c] !== null) continue;
+      const cell = grid[r]?.[c];
+      if (!cell || cell.terrain === 'empty' || cellToUnitMap[r][c] !== null) continue;
 
       if (cell.terrain === 'chateau') {
         units.push({ id: unitIndex, coords: [{ r, c }], isCastle: true });
@@ -62,9 +65,9 @@ export function calculateKingdomScore(grid, options = { middleEmpireBonus: true,
 
       // Si la case est liée à un voisin
       let linkedNeighbor = null;
-      if (cell.link === 'right' && c + 1 < size && grid[r][c + 1].link === 'left') {
+      if (cell.link === 'right' && c + 1 < size && grid[r][c + 1]?.link === 'left') {
         linkedNeighbor = { r, c: c + 1 };
-      } else if (cell.link === 'bottom' && r + 1 < size && grid[r + 1][c].link === 'top') {
+      } else if (cell.link === 'bottom' && r + 1 < size && grid[r + 1]?.[c]?.link === 'top') {
         linkedNeighbor = { r: r + 1, c };
       }
 
@@ -102,9 +105,6 @@ export function calculateKingdomScore(grid, options = { middleEmpireBonus: true,
       for (const unit of units) {
         if (legalUnitSet.has(unit.id)) continue;
 
-        // Une unité est légalement posée si au moins une de ses cases touche :
-        // a) Le Château (joker)
-        // b) Une case d'une unité DÉJÀ LÉGALE avec le MÊME biome de terrain !
         let canConnect = false;
 
         for (const coord of unit.coords) {
@@ -162,7 +162,7 @@ export function calculateKingdomScore(grid, options = { middleEmpireBonus: true,
     for (let c = 0; c < size; c++) {
       const cell = grid[r][c];
 
-      if (cell.terrain === 'empty' || cell.terrain === 'chateau') continue;
+      if (!cell || cell.terrain === 'empty' || cell.terrain === 'chateau') continue;
       if (!legalGridMask[r][c]) continue; // Tuile illégale ignorée
 
       totalCrowns += cell.crowns || 0;
@@ -221,7 +221,7 @@ export function calculateKingdomScore(grid, options = { middleEmpireBonus: true,
 
   // Bonus "Empire du Milieu" (+10 pts si le château est au centre)
   const centerIndex = Math.floor(size / 2);
-  const isCastleCentered = castlePos && castlePos.r === centerIndex && castlePos.c === centerIndex;
+  const isCastleCentered = Boolean(castlePos && castlePos.r === centerIndex && castlePos.c === centerIndex);
   const middleEmpireScore = (options.middleEmpireBonus && isCastleCentered) ? 10 : 0;
 
   // Bonus "Harmonie" (+5 pts si aucune case vide n'est présente dans la grille, 1 château posé et 0 tuile illégale)
@@ -271,7 +271,15 @@ export function calculateKingdomScore(grid, options = { middleEmpireBonus: true,
   };
 }
 
-export function comparePlayers(playerA, playerB) {
+export function comparePlayers(playerA, playerB, isDynastyFinished = false) {
+  if (isDynastyFinished) {
+    if (playerB.cumulativeScore !== playerA.cumulativeScore) {
+      return playerB.cumulativeScore - playerA.cumulativeScore;
+    }
+    if ((playerB.cumulativeCrowns || 0) !== (playerA.cumulativeCrowns || 0)) {
+      return (playerB.cumulativeCrowns || 0) - (playerA.cumulativeCrowns || 0);
+    }
+  }
   if (playerB.scoreData.totalScore !== playerA.scoreData.totalScore) {
     return playerB.scoreData.totalScore - playerA.scoreData.totalScore;
   }
@@ -281,71 +289,77 @@ export function comparePlayers(playerA, playerB) {
   return playerB.scoreData.totalCrowns - playerA.scoreData.totalCrowns;
 }
 
+export function arePlayersTied(playerA, playerB, isDynastyFinished = false) {
+  if (!playerA || !playerB) return false;
+  return comparePlayers(playerA, playerB, isDynastyFinished) === 0;
+}
+
 export function computeGameHonors(players) {
   const honors = {};
+  if (!players || players.length === 0) return honors;
 
-  // 1. Monarque Doré
-  const sortedByCrowns = [...players].sort((a, b) => b.scoreData.totalCrowns - a.scoreData.totalCrowns);
-  if (sortedByCrowns[0] && sortedByCrowns[0].scoreData.totalCrowns > 0) {
-    const winnerId = sortedByCrowns[0].id;
-    const crowns = sortedByCrowns[0].scoreData.totalCrowns;
-    if (!honors[winnerId]) honors[winnerId] = [];
-    honors[winnerId].push({
-      icon: '👑',
-      title: 'Monarque Doré',
-      desc: `${crowns} couronne${crowns > 1 ? 's' : ''}`
-    });
+  const addHonor = (playerId, honor) => {
+    if (!honors[playerId]) honors[playerId] = [];
+    honors[playerId].push(honor);
+  };
+
+  // 1. Monarque Doré (ex-aequo pris en compte)
+  const maxCrowns = Math.max(...players.map(p => p.scoreData.totalCrowns));
+  if (maxCrowns > 0) {
+    players
+      .filter(p => p.scoreData.totalCrowns === maxCrowns)
+      .forEach(p => {
+        addHonor(p.id, {
+          icon: '👑',
+          title: 'Monarque Doré',
+          desc: `${maxCrowns} couronne${maxCrowns > 1 ? 's' : ''}`
+        });
+      });
   }
 
-  // 2. Seigneur des Forêts
-  let bestForest = { size: 0, player: null };
-  players.forEach(p => {
-    const forestDomains = p.scoreData.domains.filter(d => d.terrain === 'foret');
-    const maxSize = forestDomains.length > 0 ? Math.max(...forestDomains.map(d => d.size)) : 0;
-    if (maxSize > bestForest.size) {
-      bestForest = { size: maxSize, player: p };
-    }
-  });
-  if (bestForest.player && bestForest.size >= 3) {
-    const winnerId = bestForest.player.id;
-    if (!honors[winnerId]) honors[winnerId] = [];
-    honors[winnerId].push({
-      icon: '🌲',
-      title: 'Seigneur des Forêts',
-      desc: `Forêt de ${bestForest.size} cases`
-    });
+  // 2. Seigneur des Forêts (ex-aequo pris en compte)
+  const getMaxTerrainSize = (player, terrainKey) => {
+    const matching = player.scoreData.domains.filter(d => d.terrain === terrainKey);
+    return matching.length > 0 ? Math.max(...matching.map(d => d.size)) : 0;
+  };
+
+  const maxForest = Math.max(...players.map(p => getMaxTerrainSize(p, 'foret')));
+  if (maxForest >= 3) {
+    players
+      .filter(p => getMaxTerrainSize(p, 'foret') === maxForest)
+      .forEach(p => {
+        addHonor(p.id, {
+          icon: '🌲',
+          title: 'Seigneur des Forêts',
+          desc: `Forêt de ${maxForest} cases`
+        });
+      });
   }
 
-  // 3. Maître des Moissons (Blé)
-  let bestChamps = { size: 0, player: null };
-  players.forEach(p => {
-    const champsDomains = p.scoreData.domains.filter(d => d.terrain === 'champs');
-    const maxSize = champsDomains.length > 0 ? Math.max(...champsDomains.map(d => d.size)) : 0;
-    if (maxSize > bestChamps.size) {
-      bestChamps = { size: maxSize, player: p };
-    }
-  });
-  if (bestChamps.player && bestChamps.size >= 3) {
-    const winnerId = bestChamps.player.id;
-    if (!honors[winnerId]) honors[winnerId] = [];
-    honors[winnerId].push({
-      icon: '🌾',
-      title: 'Maître des Moissons',
-      desc: `Champs de ${bestChamps.size} cases`
-    });
+  // 3. Maître des Moissons (Blé - ex-aequo pris en compte)
+  const maxChamps = Math.max(...players.map(p => getMaxTerrainSize(p, 'champs')));
+  if (maxChamps >= 3) {
+    players
+      .filter(p => getMaxTerrainSize(p, 'champs') === maxChamps)
+      .forEach(p => {
+        addHonor(p.id, {
+          icon: '🌾',
+          title: 'Maître des Moissons',
+          desc: `Champs de ${maxChamps} cases`
+        });
+      });
   }
 
-  // 4. Géomètre Royal (Château centré + grille pleine)
-  const perfectBuilders = players.filter(p => p.scoreData.isCastleCentered && p.scoreData.isCompleteKingdom);
-  if (perfectBuilders.length > 0) {
-    const winnerId = perfectBuilders[0].id;
-    if (!honors[winnerId]) honors[winnerId] = [];
-    honors[winnerId].push({
-      icon: '🎯',
-      title: 'Géomètre Royal',
-      desc: 'Domaine centré et complet'
+  // 4. Géomètre Royal (Château centré + grille pleine, attribué à tous ceux qui le réussissent)
+  players
+    .filter(p => p.scoreData.isCastleCentered && p.scoreData.isCompleteKingdom)
+    .forEach(p => {
+      addHonor(p.id, {
+        icon: '🎯',
+        title: 'Géomètre Royal',
+        desc: 'Domaine centré et complet'
+      });
     });
-  }
 
   return honors;
 }

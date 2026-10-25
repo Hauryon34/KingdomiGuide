@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -41,12 +42,17 @@ export default {
         'meeple': '0 4px 10px rgba(0,0,0,0.25)',
       },
       animation: {
+        'fade-in': 'fadeIn 0.25s ease-out forwards',
         'bounce-short': 'bounceShort 0.5s ease-in-out',
         'shake': 'shake 0.4s ease-in-out',
         'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         'glow': 'glow 2s infinite alternate',
       },
       keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
         bounceShort: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-10px)' },

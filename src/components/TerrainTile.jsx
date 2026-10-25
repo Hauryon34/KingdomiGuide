@@ -52,7 +52,15 @@ export default function TerrainTile({
     <div
       role="button"
       tabIndex={0}
+      aria-label={`${terrainInfo.name} (${row + 1}, ${col + 1})${cell.crowns ? ` - ${cell.crowns} couronnes` : ''}`}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onPointerDown?.();
+          onClick?.();
+        }
+      }}
       onContextMenu={onContextMenu}
       onPointerDown={onPointerDown}
       onPointerEnter={onPointerEnter}
@@ -65,16 +73,16 @@ export default function TerrainTile({
         ${linkedBorders}
         ${terrainInfo.bgClass}
         ${ringClasses}
-        ${isSelected ? 'ring-4 ring-amber-400 ring-offset-2 ring-offset-slate-900 z-20 scale-105' : ''}
-        ${isLinkPending ? 'ring-4 ring-indigo-400 ring-offset-2 ring-offset-slate-900 z-20 animate-bounce scale-105' : ''}
-        ${isHighlighted ? 'ring-2 ring-yellow-300 animate-pulse scale-102 z-10' : ''}
-        ${isIllegalConnection ? '!ring-2 !ring-rose-500 ring-offset-1 ring-offset-slate-900 animate-pulse z-20' : ''}
+        ${isSelected ? 'ring-4 ring-amber-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 z-20 scale-105' : ''}
+        ${isLinkPending ? 'ring-4 ring-indigo-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 z-20 animate-bounce scale-105' : ''}
+        ${isHighlighted ? 'ring-2 ring-yellow-400 animate-pulse scale-102 z-10' : ''}
+        ${isIllegalConnection ? '!ring-2 !ring-rose-500 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 animate-pulse z-20' : ''}
       `}
       title={`${terrainInfo.name} (${row + 1}, ${col + 1}) - ${cell.crowns} 👑`}
     >
       {/* Empty State: coordonnée visible UNIQUEMENT quand la case est vide */}
       {isEmpty && (
-        <span className="text-[10px] font-mono opacity-25 text-slate-400">
+        <span className="text-[10px] font-mono opacity-40 dark:opacity-25 text-slate-500 dark:text-slate-400">
           {row + 1},{col + 1}
         </span>
       )}
@@ -82,14 +90,14 @@ export default function TerrainTile({
       {/* Castle State */}
       {isCastle && (
         <div className="flex items-center justify-center text-slate-900">
-          <Castle size={size === 'sm' ? 20 : 28} className="fill-slate-900/30" />
+          <Castle size={size === 'sm' ? 20 : 28} className="fill-amber-500/30 text-slate-900" />
         </div>
       )}
 
       {/* Normal Terrain State */}
       {!isEmpty && !isCastle && (
         <>
-          <div className="opacity-85">
+          <div className="opacity-90">
             <TerrainIcon 
               type={cell.terrain} 
               size={size === 'sm' ? 18 : 24} 
@@ -98,7 +106,7 @@ export default function TerrainTile({
 
           {/* Crowns Display Badge */}
           {cell.crowns > 0 && (
-            <div className="absolute top-1 right-1 flex items-center gap-0.5 bg-black/50 px-1 py-0.5 rounded-full border border-amber-300/40">
+            <div className="absolute top-1 right-1 flex items-center gap-0.5 bg-slate-950/65 px-1 py-0.5 rounded-full border border-amber-300/50">
               <Crown 
                 size={size === 'sm' ? 10 : 12} 
                 className="text-amber-300 fill-amber-400 crown-glow" 

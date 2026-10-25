@@ -4,6 +4,7 @@
  */
 
 import { createEmptyGrid } from './scoreCalculator';
+import { TERRAINS } from '../types/kingdomino';
 
 // Palette colorimétrique de référence des tuiles physiques de Kingdomino (RGB)
 const TERRAIN_PALETTES = {
@@ -43,6 +44,47 @@ const TERRAIN_PALETTES = {
     { r: 240, g: 235, b: 225 }   // Beige clair
   ]
 };
+
+/**
+ * Valide et normalise une grille retournée par le scanner
+ */
+export function sanitizeScannedGrid(rawGrid, gridSize = 5) {
+  const validTerrains = new Set(Object.keys(TERRAINS));
+  const cleanGrid = createEmptyGrid(gridSize);
+  let castleFound = false;
+
+  if (!Array.isArray(rawGrid)) return cleanGrid;
+
+  for (let r = 0; r < gridSize; r++) {
+    const row = Array.isArray(rawGrid[r]) ? rawGrid[r] : [];
+    for (let c = 0; c < gridSize; c++) {
+      const cell = row[c] || {};
+      let terrain = typeof cell.terrain === 'string' && validTerrains.has(cell.terrain)
+        ? cell.terrain
+        : 'empty';
+
+      if (terrain === 'chateau') {
+        if (castleFound) {
+          terrain = 'empty';
+        } else {
+          castleFound = true;
+        }
+      }
+
+      const maxCrowns = TERRAINS[terrain]?.maxCrowns || 0;
+      const rawCrowns = Number.isInteger(cell.crowns) ? cell.crowns : 0;
+      const crowns = Math.max(0, Math.min(maxCrowns, rawCrowns));
+
+      cleanGrid[r][c] = {
+        terrain,
+        crowns,
+        link: null
+      };
+    }
+  }
+
+  return cleanGrid;
+}
 
 /**
  * Analyse locale de l'image
@@ -89,7 +131,7 @@ export async function analyzeKingdomImageLocally(imgElement, gridSize = 5) {
       let bestTerrain = 'champs';
       let minDistance = Infinity;
       
-      for (const [terrainKey, samples] of Object.entries(TERRAINS_PALETTES)) {
+      for (const [terrainKey, samples] of Object.entries(TERRAIN_PALETTES)) {
         for (const sample of samples) {
           // Distance euclidienne pondérée (perceptuelle)
           const dr = avgR - sample.r;
@@ -104,11 +146,11 @@ export async function analyzeKingdomImageLocally(imgElement, gridSize = 5) {
         }
       }
       
-      grid[r][c] = { terrain: bestTerrain, crowns: 0 };
+      grid[r][c] = { terrain: bestTerrain, crowns: 0, link: null };
     }
   }
   
-  return grid;
+  return sanitizeScannedGrid(grid, gridSize);
 }
 
 /**
@@ -119,14 +161,17 @@ export async function analyzeKingdomImageWithAI(base64Image, gridSize = 5, apiKe
 
   const prompt = `Tu es un arbitre expert de Kingdomino.
 Analyse cette photo de grille (${gridSize}x${gridSize}).
-Identifie pour chaque case : "champs", "foret", "eau", "prairie", "marais", "mine", "chateau", "empty".
+Identifie pour chaque case : "champs", "foret", "eau", "prairie", "marais", "mine", "chateau", "empty", ainsi que le nombre de couronnes (0 à 3).
 Renvoie UNIQUEMENT un JSON : { "grid": [[{"terrain": "champs", "crowns": 0}, ...]] }`;
 
   const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey
+    },
     body: JSON.stringify({
       contents: [{
         parts: [
@@ -142,5 +187,6 @@ Renvoie UNIQUEMENT un JSON : { "grid": [[{"terrain": "champs", "crowns": 0}, ...
 
   const result = await response.json();
   const textOutput = result.candidates?.[0]?.content?.parts?.[0]?.text;
-  return JSON.parse(textOutput).grid;
+  const parsed = JSON.parse(textOutput);
+  return sanitizeScannedGrid(parsed?.grid, gridSize);
 }

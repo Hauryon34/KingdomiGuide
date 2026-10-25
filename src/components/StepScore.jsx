@@ -16,8 +16,7 @@ import {
   Camera,
   Info,
   Brush,
-  Link2,
-  Unlink
+  Link2
 } from 'lucide-react';
 import { 
   playTileSound, 
@@ -39,7 +38,8 @@ export default function StepScore({
   const [selectedTerrain, setSelectedTerrain] = useState('champs');
   const [highlightedDomain, setHighlightedDomain] = useState(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [pendingLinkSource, setPendingLinkSource] = useState(null); // { r, c } for domino linking
+  const [pendingLinkSource, setPendingLinkSource] = useState(null);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   // Pointer drag painting state
   const isPointerDownRef = useRef(false);
@@ -70,13 +70,31 @@ export default function StepScore({
     harmonyBonus: bonuses.harmony
   });
 
+  const resizeExistingGrid = (oldGrid, newSize) => {
+    const newGrid = createEmptyGrid(newSize);
+    if (!Array.isArray(oldGrid)) return newGrid;
+    const minSize = Math.min(oldGrid.length, newSize);
+    for (let r = 0; r < minSize; r++) {
+      for (let c = 0; c < minSize; c++) {
+        const cell = oldGrid[r]?.[c];
+        if (cell) {
+          let link = cell.link;
+          if (link === 'right' && c + 1 >= newSize) link = null;
+          if (link === 'bottom' && r + 1 >= newSize) link = null;
+          newGrid[r][c] = { ...cell, link };
+        }
+      }
+    }
+    return newGrid;
+  };
+
   const handleGridSizeChange = (newSize) => {
     if (newSize === gridSize) return;
     playClickSound();
     setGridSize(newSize);
     const updatedGrids = {};
     selectedMeeples.forEach((id) => {
-      updatedGrids[id] = createEmptyGrid(newSize);
+      updatedGrids[id] = resizeExistingGrid(playerGrids[id], newSize);
     });
     setPlayerGrids(updatedGrids);
     setHighlightedDomain(null);
@@ -109,14 +127,12 @@ export default function StepScore({
     }
 
     if (!pendingLinkSource) {
-      // If already linked, click toggles/unlinks
       if (cell.link) {
         unlinkCell(newGrid, r, c);
         playTileSound();
         setPlayerGrids({ ...playerGrids, [currentPlayer.id]: newGrid });
         return;
       }
-      // Set source for linking
       setPendingLinkSource({ r, c });
       playClickSound();
     } else {
@@ -124,7 +140,6 @@ export default function StepScore({
       const dr = Math.abs(src.r - r);
       const dc = Math.abs(src.c - c);
 
-      // Must be 4-way adjacent
       if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
         unlinkCell(newGrid, src.r, src.c);
         unlinkCell(newGrid, r, c);
@@ -189,6 +204,7 @@ export default function StepScore({
   };
 
   const handlePointerDown = (r, c) => {
+    setConfirmClear(false);
     if (selectedTerrain === 'link') {
       handleLinkModeClick(r, c);
       return;
@@ -231,6 +247,12 @@ export default function StepScore({
 
   const handleResetCurrentGrid = () => {
     playClickSound();
+    if (currentScoreData.totalPlacedCells > 0 && !confirmClear) {
+      setConfirmClear(true);
+      setTimeout(() => setConfirmClear(false), 3000);
+      return;
+    }
+    setConfirmClear(false);
     setPlayerGrids({
       ...playerGrids,
       [currentPlayer.id]: createEmptyGrid(gridSize)
@@ -243,14 +265,27 @@ export default function StepScore({
     playClickSound();
     const center = Math.floor(gridSize / 2);
     const newGrid = currentGrid.map(row => row.map(cell => ({ ...cell })));
+    const centerPreviousCell = { ...newGrid[center][center], link: null };
+    let oldCastlePos = null;
+
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {
         if (newGrid[r][c].terrain === 'chateau') {
+          oldCastlePos = { r, c };
+          unlinkCell(newGrid, r, c);
           newGrid[r][c] = { terrain: 'empty', crowns: 0, link: null };
         }
       }
     }
+
+    unlinkCell(newGrid, center, center);
     newGrid[center][center] = { terrain: 'chateau', crowns: 0, link: null };
+
+    // Si une tuile était au centre et qu'un château existait ailleurs, on les permute pour ne pas perdre la tuile
+    if (oldCastlePos && (oldCastlePos.r !== center || oldCastlePos.c !== center) && centerPreviousCell.terrain !== 'empty') {
+      newGrid[oldCastlePos.r][oldCastlePos.c] = centerPreviousCell;
+    }
+
     setPlayerGrids({
       ...playerGrids,
       [currentPlayer.id]: newGrid
@@ -275,18 +310,15 @@ export default function StepScore({
     return `${count} cases`;
   };
 
-  const formatCrowns = (count) => {
-    if (count <= 1) return `${count} 👑`;
-    return `${count} 👑`;
-  };
+  const formatCrowns = (count) => `${count} 👑`;
 
   return (
     <div 
-      className="space-y-4 max-w-sm sm:max-w-md mx-auto px-1 animate-fade-in select-none"
+      className="space-y-3.5 max-w-sm sm:max-w-md mx-auto px-1 animate-fade-in select-none"
       onPointerUp={handlePointerUp}
     >
       {/* 1. Sélecteur de Joueur (Compact) */}
-      <div className="bg-slate-900/90 rounded-2xl p-1.5 border border-slate-800 shadow-md">
+      <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-1.5 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-md">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
           {activePlayers.map((player) => {
             const isSelected = player.id === currentPlayer.id;
@@ -299,20 +331,21 @@ export default function StepScore({
                   setActivePlayerId(player.id);
                   setHighlightedDomain(null);
                   setPendingLinkSource(null);
+                  setConfirmClear(false);
                 }}
                 className={`p-2 rounded-xl border flex items-center justify-between transition-all ${
                   isSelected
-                    ? `${player.border} ${player.bgLight} ring-2 ring-amber-400/80 shadow-md`
-                    : 'border-slate-800/80 bg-slate-950/40 text-slate-400 hover:bg-slate-900'
+                    ? `${player.border} ${player.bgLight} ring-2 ring-amber-400/80 shadow-sm`
+                    : 'border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/40 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900'
                 }`}
               >
                 <div className="flex items-center gap-1.5 truncate">
                   <MeepleIcon color={player.color} size={22} showCrown={isSelected} />
-                  <span className="text-xs font-bold truncate text-slate-200">
+                  <span className="text-xs font-bold truncate text-slate-800 dark:text-slate-200">
                     {player.name}
                   </span>
                 </div>
-                <span className="text-xs font-black text-amber-300 bg-slate-950/80 px-1.5 py-0.5 rounded-md border border-slate-800 ml-1">
+                <span className="text-xs font-black text-amber-600 dark:text-amber-300 bg-white dark:bg-slate-950/80 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 ml-1">
                   {player.scoreData.totalScore}
                 </span>
               </button>
@@ -322,17 +355,17 @@ export default function StepScore({
       </div>
 
       {/* 2. Bandeau Score Total & Bouton Scanner 📷 */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-2xl p-3.5 border border-slate-800 shadow-lg flex items-center justify-between">
+      <div className="bg-gradient-to-r from-amber-50 via-white to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-lg flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <MeepleIcon color={currentPlayer.color} size={36} />
           <div>
-            <div className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
               <span>Royaume {currentPlayer.name}</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-mono font-bold">
                 {gridSize}×{gridSize}
               </span>
             </div>
-            <div className="text-[11px] text-slate-400">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">
               {formatPlacedCells(currentScoreData.totalPlacedCells)} • {formatCrowns(currentScoreData.totalCrowns)}
             </div>
           </div>
@@ -353,8 +386,8 @@ export default function StepScore({
           </button>
 
           <div className="text-right pl-1">
-            <div className="text-2xl font-black font-medieval text-amber-300 leading-none">
-              {currentScoreData.totalScore} <span className="text-xs font-sans text-slate-400 font-bold">{currentScoreData.totalScore > 1 ? 'pts' : 'pt'}</span>
+            <div className="text-2xl font-black font-medieval text-amber-600 dark:text-amber-300 leading-none">
+              {currentScoreData.totalScore} <span className="text-xs font-sans text-slate-500 dark:text-slate-400 font-bold">{currentScoreData.totalScore > 1 ? 'pts' : 'pt'}</span>
             </div>
           </div>
         </div>
@@ -362,14 +395,14 @@ export default function StepScore({
 
       {/* 3. Contrôles de Grille (Taille 5x5/7x7 & Outils) */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px] font-bold">
+        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] font-bold shadow-sm">
           <button
             type="button"
             onClick={() => handleGridSizeChange(5)}
             className={`px-2.5 py-1 rounded-lg transition-all ${
               gridSize === 5 
                 ? 'bg-amber-500 text-slate-950 shadow font-extrabold' 
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             5×5
@@ -380,10 +413,10 @@ export default function StepScore({
             className={`px-2.5 py-1 rounded-lg transition-all ${
               gridSize === 7 
                 ? 'bg-amber-500 text-slate-950 shadow font-extrabold' 
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            7×7 Duel
+            7×7
           </button>
         </div>
 
@@ -391,7 +424,7 @@ export default function StepScore({
           <button
             type="button"
             onClick={handleCenterCastle}
-            className="px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-semibold text-slate-300 hover:text-amber-300 flex items-center gap-1 transition-all"
+            className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-300 flex items-center gap-1 transition-all shadow-sm"
             title="Centrer le château"
           >
             <Castle size={13} />
@@ -400,20 +433,24 @@ export default function StepScore({
           <button
             type="button"
             onClick={handleResetCurrentGrid}
-            className="px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-semibold text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-all"
+            className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold flex items-center gap-1 transition-all shadow-sm ${
+              confirmClear
+                ? 'bg-rose-500 text-white border-rose-600 animate-pulse'
+                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400'
+            }`}
             title="Vider la grille"
           >
             <RotateCcw size={13} />
-            <span>Vider</span>
+            <span>{confirmClear ? 'Confirmer ?' : 'Vider'}</span>
           </button>
         </div>
       </div>
 
       {/* 4. Palette d'Outils avec Pinceau & Bouton de Liaison Domino 🔗 */}
-      <div className="bg-slate-900/95 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2.5">
+      <div className="bg-white dark:bg-slate-900/95 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-md space-y-2.5">
         <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-          <div className="flex items-center gap-1.5 text-slate-300">
-            <Brush size={14} className="text-amber-400" />
+          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+            <Brush size={14} className="text-amber-500 dark:text-amber-400" />
             <span>Pinceau de domaine</span>
           </div>
 
@@ -427,8 +464,8 @@ export default function StepScore({
             }}
             className={`px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 transition-all ${
               selectedTerrain === 'link'
-                ? 'bg-indigo-500 text-white shadow-md ring-2 ring-indigo-300 scale-105'
-                : 'bg-slate-950 border border-slate-800 text-indigo-300 hover:bg-slate-800'
+                ? 'bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300 scale-105'
+                : 'bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-indigo-600 dark:text-indigo-300 hover:bg-slate-200 dark:hover:bg-slate-800'
             }`}
           >
             <Link2 size={13} />
@@ -450,8 +487,8 @@ export default function StepScore({
                 }}
                 className={`py-2 px-1 rounded-xl border flex flex-col items-center gap-0.5 transition-all ${
                   isSelected
-                    ? 'ring-2 ring-amber-400 scale-102 shadow-md border-amber-300 ' + terrain.bgClass
-                    : 'bg-slate-950/60 border-slate-800 hover:bg-slate-800 opacity-70 hover:opacity-100'
+                    ? 'ring-2 ring-amber-400 scale-102 shadow-md border-amber-400 ' + terrain.bgClass
+                    : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 opacity-75 hover:opacity-100'
                 }`}
               >
                 <TerrainIcon type={key} size={17} />
@@ -464,8 +501,8 @@ export default function StepScore({
         </div>
 
         {/* Tip text contextuel */}
-        <div className="flex items-center justify-center gap-1 text-[11px] text-slate-400/80 pt-0.5">
-          <Info size={12} className="text-slate-400" />
+        <div className="flex items-center justify-center gap-1 text-[11px] text-slate-500 dark:text-slate-400/90 pt-0.5">
+          <Info size={12} className="text-slate-400 flex-shrink-0" />
           <span>
             {selectedTerrain === 'link'
               ? (pendingLinkSource ? 'Touchez une case adjacente pour former le domino 🔗' : 'Touchez 2 cases adjacentes pour les lier en domino (ou touchez une liaison pour la retirer)')
@@ -475,7 +512,7 @@ export default function StepScore({
       </div>
 
       {/* 5. Grille Interactive */}
-      <div className="flex justify-center p-2 sm:p-3 bg-slate-900/90 rounded-3xl border border-slate-800 shadow-xl overflow-x-auto">
+      <div className="flex justify-center p-2.5 sm:p-3 bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md dark:shadow-xl overflow-x-auto">
         <div className="inline-block space-y-1 sm:space-y-1.5">
           {currentGrid.map((row, r) => (
             <div key={r} className="flex gap-1 sm:gap-1.5">
@@ -528,11 +565,11 @@ export default function StepScore({
               key={idx}
               className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs ${
                 w.type === 'illegal'
-                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 animate-pulse'
-                  : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-600 dark:text-rose-300 animate-pulse'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300'
               }`}
             >
-              <AlertTriangle size={14} className={w.type === 'illegal' ? 'text-rose-400 flex-shrink-0' : 'text-amber-400 flex-shrink-0'} />
+              <AlertTriangle size={14} className={w.type === 'illegal' ? 'text-rose-500 flex-shrink-0' : 'text-amber-500 flex-shrink-0'} />
               <span>{w.text}</span>
             </div>
           ))}
@@ -540,8 +577,8 @@ export default function StepScore({
       )}
 
       {/* 7. Points Additionnels */}
-      <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2.5">
-        <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+      <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-md space-y-2.5">
+        <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block">
           Points additionnels
         </span>
 
@@ -550,18 +587,18 @@ export default function StepScore({
           <div
             className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
               currentScoreData.middleEmpireScore > 0
-                ? 'bg-amber-500/15 border-amber-400 shadow ring-1 ring-amber-400/40'
-                : 'bg-slate-950/60 border-slate-800'
+                ? 'bg-amber-50 dark:bg-amber-500/15 border-amber-400 shadow ring-1 ring-amber-400/40'
+                : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800'
             }`}
           >
             <div className="flex items-center justify-between gap-1.5">
-              <span className="text-xs font-bold text-slate-200 flex-1 min-w-0 leading-tight">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex-1 min-w-0 leading-tight">
                 🏰 Empire Milieu
               </span>
               <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
                 currentScoreData.middleEmpireScore > 0 
                   ? 'bg-amber-400 text-slate-950 shadow-sm' 
-                  : 'bg-slate-800 text-slate-500'
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
               }`}>
                 {currentScoreData.middleEmpireScore > 0 ? '+10 pts' : '0 pt'}
               </span>
@@ -569,9 +606,9 @@ export default function StepScore({
 
             <div className="mt-1.5 text-[10px] flex items-center gap-1 font-medium">
               {currentScoreData.isCastleCentered ? (
-                <span className="text-emerald-400">✓ Château centré</span>
+                <span className="text-emerald-600 dark:text-emerald-400">✓ Château centré</span>
               ) : (
-                <span className="text-slate-400">✗ Château non centré</span>
+                <span className="text-slate-500 dark:text-slate-400">✗ Château non centré</span>
               )}
             </div>
           </div>
@@ -580,18 +617,18 @@ export default function StepScore({
           <div
             className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
               currentScoreData.harmonyScore > 0
-                ? 'bg-emerald-500/15 border-emerald-400 shadow ring-1 ring-emerald-400/40'
-                : 'bg-slate-950/60 border-slate-800'
+                ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-400 shadow ring-1 ring-emerald-400/40'
+                : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800'
             }`}
           >
             <div className="flex items-center justify-between gap-1.5">
-              <span className="text-xs font-bold text-slate-200 flex-1 min-w-0 leading-tight">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex-1 min-w-0 leading-tight">
                 ✨ Harmonie
               </span>
               <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
                 currentScoreData.harmonyScore > 0 
                   ? 'bg-emerald-400 text-slate-950 shadow-sm' 
-                  : 'bg-slate-800 text-slate-500'
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
               }`}>
                 {currentScoreData.harmonyScore > 0 ? '+5 pts' : '0 pt'}
               </span>
@@ -599,9 +636,9 @@ export default function StepScore({
 
             <div className="mt-1.5 text-[10px] flex items-center gap-1 font-medium">
               {currentScoreData.isCompleteKingdom ? (
-                <span className="text-emerald-400">✓ Grille pleine</span>
+                <span className="text-emerald-600 dark:text-emerald-400">✓ Grille pleine</span>
               ) : (
-                <span className="text-slate-400">✗ {formatEmptyCells(currentScoreData.emptyCells)}</span>
+                <span className="text-slate-500 dark:text-slate-400">✗ {formatEmptyCells(currentScoreData.emptyCells)}</span>
               )}
             </div>
           </div>
@@ -609,19 +646,19 @@ export default function StepScore({
       </div>
 
       {/* 8. Liste des Domaines */}
-      <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-md space-y-2.5">
+      <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-md space-y-2.5">
         <div className="space-y-0.5 text-left">
-          <span className="font-bold text-xs text-slate-200 block uppercase tracking-wider">
+          <span className="font-bold text-xs text-slate-700 dark:text-slate-200 block uppercase tracking-wider">
             Détail des Domaines ({currentScoreData.domains.length})
           </span>
-          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+          <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
             <Info size={11} className="text-slate-400" />
             <span>Touchez un domaine pour le surligner sur la grille</span>
           </div>
         </div>
 
         {currentScoreData.domains.length === 0 ? (
-          <p className="text-xs text-slate-500 italic p-2.5 text-center bg-slate-950/40 rounded-xl">
+          <p className="text-xs text-slate-500 italic p-2.5 text-center bg-slate-50 dark:bg-slate-950/40 rounded-xl">
             Aucun terrain valide connecté pour l'instant.
           </p>
         ) : (
@@ -640,28 +677,28 @@ export default function StepScore({
                   }}
                   className={`w-full p-2 rounded-xl border text-left flex items-center justify-between transition-all ${
                     isHighlighted
-                      ? 'bg-amber-500/20 border-amber-400 ring-1 ring-amber-300'
-                      : 'bg-slate-950/60 border-slate-800 hover:bg-slate-900'
+                      ? 'bg-amber-50 dark:bg-amber-500/20 border-amber-400 ring-1 ring-amber-300'
+                      : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <div className={`p-1 rounded-lg ${terrain.bgClass}`}>
                       <TerrainIcon type={dom.terrain} size={14} />
                     </div>
-                    <div className="text-xs font-bold text-slate-200">
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
                       {terrain.name}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-mono">
                       <span>{dom.size}</span>
                       <span>×</span>
-                      <span className="text-amber-300 font-bold">{dom.crowns} 👑</span>
+                      <span className="text-amber-600 dark:text-amber-300 font-bold">{dom.crowns} 👑</span>
                     </div>
 
                     <div className={`text-xs font-black min-w-[45px] text-right font-mono ${
-                      dom.score > 0 ? 'text-amber-300' : 'text-slate-600'
+                      dom.score > 0 ? 'text-amber-600 dark:text-amber-300' : 'text-slate-400 dark:text-slate-600'
                     }`}>
                       = {dom.score} <span className="text-[9px] font-sans text-slate-400">{dom.score > 1 ? 'pts' : 'pt'}</span>
                     </div>

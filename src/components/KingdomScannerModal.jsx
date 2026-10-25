@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Sparkles, X, Check, RefreshCw, AlertCircle } from 'lucide-react';
+import { Camera, Sparkles, X, Check, RefreshCw, AlertCircle, Trash2 } from 'lucide-react';
 import { analyzeKingdomImageLocally, analyzeKingdomImageWithAI } from '../utils/visionScanner';
 import { calculateKingdomScore } from '../utils/scoreCalculator';
 
@@ -14,7 +14,7 @@ export default function KingdomScannerModal({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [detectedGrid, setDetectedGrid] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [apiKey, setApiKey] = useState(() => sessionStorage.getItem('gemini_api_key') || '');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   const fileInputRef = useRef(null);
@@ -41,7 +41,7 @@ export default function KingdomScannerModal({
 
     try {
       if (apiKey.trim()) {
-        localStorage.setItem('gemini_api_key', apiKey.trim());
+        sessionStorage.setItem('gemini_api_key', apiKey.trim());
         const grid = await analyzeKingdomImageWithAI(imageSrc, gridSize, apiKey.trim());
         setDetectedGrid(grid);
       } else {
@@ -69,27 +69,27 @@ export default function KingdomScannerModal({
   const scoreData = detectedGrid ? calculateKingdomScore(detectedGrid) : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 w-full max-w-md shadow-2xl space-y-4 relative my-auto max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/75 dark:bg-slate-950/90 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 w-full max-w-md shadow-2xl space-y-4 relative my-auto max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
         >
           <X size={18} />
         </button>
 
         {/* Header */}
         <div className="text-center space-y-1 pt-1">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30">
             <Camera size={26} />
           </div>
-          <h3 className="text-xl font-black font-medieval text-amber-200">
+          <h3 className="text-xl font-black font-medieval text-slate-900 dark:text-amber-200">
             Scanner le Royaume ({gridSize}×{gridSize})
           </h3>
-          <p className="text-xs text-slate-400">
-            Photo du domaine de <strong className="text-slate-200">{playerName}</strong>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Photo du domaine de <strong className="text-slate-800 dark:text-slate-200">{playerName}</strong>
           </p>
         </div>
 
@@ -109,23 +109,23 @@ export default function KingdomScannerModal({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full py-10 px-4 rounded-3xl border-2 border-dashed border-amber-500/40 bg-slate-950/60 hover:bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-300 hover:text-amber-300 transition-all cursor-pointer"
+              className="w-full py-10 px-4 rounded-3xl border-2 border-dashed border-amber-500/40 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-300 transition-all cursor-pointer"
             >
-              <div className="p-3.5 rounded-full bg-amber-500/20 text-amber-400">
+              <div className="p-3.5 rounded-full bg-amber-500/20 text-amber-500 dark:text-amber-400">
                 <Camera size={30} />
               </div>
               <div className="text-center space-y-0.5">
-                <span className="text-sm font-bold text-slate-100 block">
+                <span className="text-sm font-bold text-slate-900 dark:text-slate-100 block">
                   Prendre une photo du dessus
                 </span>
-                <span className="text-[11px] text-slate-400 block">
+                <span className="text-xs text-slate-500 dark:text-slate-400 block">
                   ou choisir dans la galerie
                 </span>
               </div>
             </button>
 
-            <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-              <span className="font-bold text-amber-300 block">💡 Conseils :</span>
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 space-y-1">
+              <span className="font-bold text-amber-600 dark:text-amber-300 block">💡 Conseils :</span>
               <ul className="list-disc pl-4 space-y-0.5">
                 <li>Prenez la photo bien à la verticale du plateau.</li>
                 <li>Cadrez l'ensemble des dominos dans le carré.</li>
@@ -135,7 +135,7 @@ export default function KingdomScannerModal({
         ) : (
           <div className="space-y-3">
             {/* Image Preview with grid overlay */}
-            <div className="relative rounded-2xl overflow-hidden border-2 border-slate-700 max-h-56 bg-black flex items-center justify-center">
+            <div className="relative rounded-2xl overflow-hidden border-2 border-slate-300 dark:border-slate-700 max-h-56 bg-black flex items-center justify-center">
               <img
                 src={imageSrc}
                 alt="Aperçu"
@@ -159,7 +159,7 @@ export default function KingdomScannerModal({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="py-2.5 px-3 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 flex items-center gap-1.5"
+                className="py-2.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-700 flex items-center gap-1.5"
               >
                 <RefreshCw size={14} />
                 Reprendre
@@ -180,7 +180,7 @@ export default function KingdomScannerModal({
 
         {/* Error Alert */}
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-300 flex items-center gap-2">
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-600 dark:text-rose-300 flex items-center gap-2">
             <AlertCircle size={16} className="flex-shrink-0" />
             <span>{errorMsg}</span>
           </div>
@@ -188,16 +188,22 @@ export default function KingdomScannerModal({
 
         {/* Detection Result & Validation */}
         {detectedGrid && (
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-emerald-500/40 space-y-3 animate-fade-in">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-emerald-500/40 space-y-3 animate-fade-in">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                 <Check size={16} />
                 Domaines détectés !
               </span>
-              <span className="text-sm font-black font-medieval text-amber-300">
+              <span className="text-sm font-black font-medieval text-amber-600 dark:text-amber-300">
                 {scoreData?.totalScore} pts
               </span>
             </div>
+
+            {!apiKey.trim() && (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5">
+                💡 Astuce : Touchez ensuite les cases sur votre grille pour ajouter vos couronnes 👑.
+              </p>
+            )}
 
             {/* Mini preview */}
             <div className="flex justify-center py-1">
@@ -215,7 +221,7 @@ export default function KingdomScannerModal({
                           cell.terrain === 'prairie' ? 'bg-lime-500 text-black border-lime-600' :
                           cell.terrain === 'marais' ? 'bg-purple-700 text-white border-purple-800' :
                           cell.terrain === 'mine' ? 'bg-slate-700 text-white border-slate-900' :
-                          'bg-slate-900 border-slate-800'
+                          'bg-slate-200 dark:bg-slate-900 border-slate-300 dark:border-slate-800'
                         }`}
                       >
                         {cell.terrain === 'chateau' ? '🏰' : ''}
@@ -226,7 +232,7 @@ export default function KingdomScannerModal({
               </div>
             </div>
 
-            {/* Apply Button (Always clear and visible) */}
+            {/* Apply Button */}
             <button
               type="button"
               onClick={handleApply}
@@ -243,22 +249,37 @@ export default function KingdomScannerModal({
           <button
             type="button"
             onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-            className="text-[10px] text-slate-500 hover:text-slate-300 underline"
+            className="text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline"
           >
             {showApiKeyInput ? "Masquer les réglages" : "⚙️ Option : Activer l'IA Vision Cloud (Gemini)"}
           </button>
 
           {showApiKeyInput && (
-            <div className="mt-2 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-left space-y-1.5 animate-fade-in">
-              <label className="text-[10px] text-slate-400 block font-medium">
-                Clé API Google Gemini (Optionnelle) :
-              </label>
+            <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-left space-y-1.5 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
+                  Clé API Google Gemini (Session) :
+                </label>
+                {apiKey && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setApiKey('');
+                      sessionStorage.removeItem('gemini_api_key');
+                      localStorage.removeItem('gemini_api_key');
+                    }}
+                    className="text-[10px] text-rose-500 flex items-center gap-0.5 hover:underline"
+                  >
+                    <Trash2 size={11} /> Effacer
+                  </button>
+                )}
+              </div>
               <input
                 type="password"
                 value={apiKey}
                 placeholder="AIzaSy..."
                 onChange={(e) => setApiKey(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none"
               />
             </div>
           )}
